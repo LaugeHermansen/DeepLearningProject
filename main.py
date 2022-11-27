@@ -35,6 +35,9 @@ from glob import glob
 from tqdm import tqdm
 
 
+# specify path to root
+
+root_directory = r'D:\DTU\DeepLearningProject'
 
 
 base_params = dict(
@@ -48,60 +51,94 @@ base_params = dict(
     n_mels=80,
     n_fft=1024,
     hop_samples=256,
-    crop_mel_frames=62,  # Probably an error in paper.
+    crop_mel_frames=62,  # TODO: Probably an error in paper.
 
     # Model params
-    residual_layers=30,
-    residual_channels=64,
-    dilation_cycle_length=10,
-    unconditional = False,
-    noise_schedule=np.linspace(1e-4, 0.05, 50).tolist(),
+    residual_layers=30, # N
+    residual_channels=64, # C
+    dilation_cycle_length=10, # n
+    unconditional = False, #TODO remove this?
+    noise_schedule=np.linspace(1e-4, 0.05, 50).tolist(), # beta
     inference_noise_schedule=[0.0001, 0.001, 0.01, 0.05, 0.2, 0.5],
 
+    #TODO: remove this?
     # unconditional sample len
     audio_len = 22050*5, # unconditional_synthesis_samples
     
     # own params
-    data_dir = 'C:/Users/niels/local_data/diff_wave/LJSpeech-1.1/wavs', # used only to preprocess, has to be parent to all other
+    data_dir = f'{root_directory}/data/LJSpeech-1.1/wavs', # used only to preprocess, has to be parent to all other
     # num_workers = 0,
     fp16 = True
 )
 
 
 class AttrDict(dict):
-  def __init__(self, *args, **kwargs):
-      super(AttrDict, self).__init__(*args, **kwargs)
-      self.__dict__ = self
+    """
+    helper class for convenience - no methematical 
+    """
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
 
-  def override(self, attrs):
-    if isinstance(attrs, dict):
-      self.__dict__.update(**attrs)
-    elif isinstance(attrs, (list, tuple, set)):
-      for attr in attrs:
-        self.override(attr)
-    elif attrs is not None:
-      raise NotImplementedError
-    return self
+    def override(self, attrs):
+        if isinstance(attrs, dict):
+            self.__dict__.update(**attrs)
+        elif isinstance(attrs, (list, tuple, set)):
+            for attr in attrs:
+                self.override(attr)
+        elif attrs is not None:
+            raise NotImplementedError
+        return self
 
 
 def Conv1d(*args, **kwargs):
+    """
+    Costum conv 1d - with Kaiming normal initialized weights and biases
+    nothing new here either
+    """
     layer = nn.Conv1d(*args, **kwargs)
     nn.init.kaiming_normal_(layer.weight)
     return layer
 
 
+
 class DiffusionEmbedding(nn.Module):
     def __init__(self, max_steps):
+        """
+        embedding the diffusion step as input to the model
+        as described in section 3.1 + figure 2 in diffwave paper
+
+        parameters
+        --------
+        * max_steps: int, T from the paper - maximal numbe rof diffusion steps
+
+        methods
+        --------
+        * __init__: initialize the embeddings (eq 8) for all diffusion steps
+        * forward: get embedding at given diffusion step
+        * _build_embedding: create the sin,cos vector
+        * _lerp_embedding: linearly interpolate embeddings in case of non integer diff step.
+
+        """
         super().__init__()
         self.register_buffer('embedding', self._build_embedding(max_steps), persistent=False)
         self.projection1 = nn.Linear(128, 512)
         self.projection2 = nn.Linear(512, 512)
 
     def forward(self, diffusion_step):
+        """
+        return embedding at diffusion step: diffusion_step.
+        """
+
+        #if diffusion_step is integer, yield embedding
         if diffusion_step.dtype in [torch.int32, torch.int64]:
             x = self.embedding[diffusion_step]
+        
+        #otherwize linearly interpolate
         else:
             x = self._lerp_embedding(diffusion_step)
+
+        # 2FC layers according to figure 2
         x = self.projection1(x)
         x = F.silu(x)
         x = self.projection2(x)
@@ -109,6 +146,11 @@ class DiffusionEmbedding(nn.Module):
         return x
 
     def _lerp_embedding(self, t):
+        """
+        used in fast sampling
+        
+        linearly interpolate embedding in case of non-integer diffusion step: t.
+        """
         low_idx = torch.floor(t).long()
         high_idx = torch.ceil(t).long()
         low = self.embedding[low_idx]
@@ -116,6 +158,9 @@ class DiffusionEmbedding(nn.Module):
         return low + (high - low) * (t - low_idx)
 
     def _build_embedding(self, max_steps):
+        """
+        create the embedding as described in section 3.1, eq(8)
+        """
         steps = torch.arange(max_steps).unsqueeze(1) # [T,1]
         dims = torch.arange(64).unsqueeze(0)         # [1,64]
         table = steps * 10.0**(dims * 4.0 / 63.0)    # [T,64]
@@ -125,6 +170,9 @@ class DiffusionEmbedding(nn.Module):
 
 class SpectrogramUpsampler(nn.Module):
     def __init__(self, n_mels):
+        """
+        upsampler to make spectogram as long as waveform using transposed 2d conv - section 3.2
+        """
         super().__init__()
         self.conv1 = nn.ConvTranspose2d(1, 1, [3, 32], stride=[1, 16], padding=[1, 8])
         self.conv2 = nn.ConvTranspose2d(1, 1, [3, 32], stride=[1, 16], padding=[1, 8])
@@ -142,10 +190,13 @@ class SpectrogramUpsampler(nn.Module):
 class ResidualBlock(nn.Module):
     def __init__(self, n_mels, residual_channels, dilation):
         '''
-        :param n_mels: inplanes of conv1x1 for spectrogram conditional
-        :param residual_channels: audio conv
-        :param dilation: audio conv dilation
-        :param uncond: disable spectrogram conditional
+        One residual block as described in figure 2, and also in the appendix C
+
+        parameters
+        ---------
+        * n_mels: bins in the mel spectrogram (dimensionality of spectrogram on first axis)
+        * residual_channels: C as described in he paper as well
+        * dilation: dilation of the 1d convolution - see paper as well.
         '''
         super().__init__()
         
@@ -174,6 +225,13 @@ class ResidualBlock(nn.Module):
 
 class DiffWave(pl.LightningModule):
     def __init__(self, params):
+        """
+        Colect it all, to build the diffwave model
+
+        parameters
+        ------------
+        params: attribute dict as in the top of this file
+        """
         super().__init__()
         
         # save hyperparams for load
@@ -191,9 +249,13 @@ class DiffWave(pl.LightningModule):
         self.output_projection = Conv1d(params.residual_channels, 1, 1)
         
         # fill the input with zeros
+
+
+        #TODO: what does this do?
         nn.init.zeros_(self.output_projection.weight)
         
         # train params
+        #TODO: why use L1-loss. it says MSE loss in the paper (eq 7) doesn't it?
         self.loss_fn = nn.L1Loss()
         beta = np.array(self.params.noise_schedule)
         noise_level = np.cumprod(1 - beta)
@@ -201,6 +263,9 @@ class DiffWave(pl.LightningModule):
         self.autocast = torch.cuda.amp.autocast(enabled=params.get('fp16', False))
 
     def forward(self, audio, diffusion_step, spectrogram):
+        """
+        predict noise at diffusion step given noisy audio while conditioning on spectrogram
+        """
         x = audio.unsqueeze(1)
         x = self.input_projection(x)
         x = F.relu(x)
@@ -212,7 +277,7 @@ class DiffWave(pl.LightningModule):
         skip = torch.zeros_like(x)
         for layer in self.residual_layers:
             x, skip_connection = layer(x, diffusion_step, spectrogram)
-            skip += skip_connection
+            skip = skip + skip_connection
 
         x = skip / sqrt(len(self.residual_layers))
         x = self.skip_projection(x)
@@ -224,17 +289,25 @@ class DiffWave(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=self.params.learning_rate)
     
     def process_batch(self, batch):
+        """
+        compute loss as described in eq 6 - for the given batch.
+
+        """
+
+        #TODO remove?
         # for param in self.parameters():
         #     param.grad = None
             
         audio, spectrogram = batch['audio'], batch['spectrogram']
 
         N, T = audio.shape
+
+        #TODO remove?
         # device = audio.device
         # self.noise_level = self.noise_level.to(device)
 
         with self.autocast:
-            t = torch.randint(0, len(self.params.noise_schedule), [N]) # , device=audio.device
+            t = torch.randint(0, len(self.params.noise_schedule), [N]) # , device=audio.device TODO remove?
             noise_scale = self.noise_level[t].unsqueeze(1)
             noise_scale_sqrt = torch.sqrt(noise_scale)
             noise = torch.randn_like(audio)
@@ -261,6 +334,10 @@ class DiffWave(pl.LightningModule):
         return loss
     
     def predict_step(self, batch, batch_idx):
+        """
+        generate sound conditional on spectrogram (given in batch)
+        fast sampling (inference) as described in appendix b
+        """
         with torch.no_grad():
             # Change in notation from the DiffWave paper for fast sampling.
             # DiffWave paper -> Implementation below
@@ -272,6 +349,8 @@ class DiffWave(pl.LightningModule):
             
             spectrogram = batch['spectrogram']
             
+            #TODO avoid sending to device in pytorch lightning modules
+
             # get device
             device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
             
@@ -300,7 +379,7 @@ class DiffWave(pl.LightningModule):
             spectrogram = spectrogram.to(device)
             audio = torch.randn(spectrogram.shape[0], self.params.hop_samples * spectrogram.shape[-1], device=device)
             
-            # noise_scale = torch.from_numpy(alpha_cum**0.5).float().unsqueeze(1).to(device)
+            # noise_scale = torch.from_numpy(alpha_cum**0.5).float().unsqueeze(1).to(device) #TODO what is this?
             
             for n in range(len(alpha) - 1, -1, -1):
                 c1 = 1 / alpha[n]**0.5
@@ -345,11 +424,17 @@ class SpeechDataset(Dataset):
         spec_filename = f'{audio_filename}.spec.npy'
         signal, _ = torchaudio.load(audio_filename)
         spectrogram = np.load(spec_filename).T
+        #TODO sample rate?
         return {
             'audio': signal.squeeze(0),
             'spectrogram': spectrogram
         }
 
+
+# TODO: I don't understand this class.
+# why both a validation, and train, and test path?
+# why not create a sampler function or whatever it is, that samples from the data
+# with this structure, we need separate folders for train/test/validation data?
 
 class SpeechDataModule(pl.LightningDataModule):
     def __init__(self, params, train_path, val_path=None, test_path=None):
@@ -360,6 +445,8 @@ class SpeechDataModule(pl.LightningDataModule):
         self.params = params
         
         # this is for improving speed
+
+        #TODO according to pyorch lightning docs using num_workers in dataloader is a baaad idea <3 use DDP instead
         self.num_workers = self.params.get('num_workers', os.cpu_count())
         
         # this is for the dataloader
@@ -469,7 +556,7 @@ def main(model_path, params):
     pl.seed_everything(42, workers=True)
     
     data = SpeechDataModule(params=params,
-                            train_path='C:/Users/niels/local_data/diff_wave/LJSpeech-1.1/wavs',
+                            train_path=params.data_dir,
                             val_path=None,
                             test_path=None
                             )
