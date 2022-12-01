@@ -9,7 +9,7 @@ class Timer:
         self.total_running_time = 0
         self.active = active
     
-    def evaluate(self, filename):
+    def evaluate(self, filename = None):
         
         output = defaultdict(list)
         total = self.total_running_time*1e-9
@@ -26,7 +26,7 @@ class Timer:
             output["Standard div time"].append((T_sq/N + T**2/N**2)**0.5)
 
         output = pd.DataFrame(output)
-        output.to_csv(filename.replace(".csv", "") + ("_unfinished_tasks" if len(self.current) else ""))
+        if filename is not None: output.to_csv(filename.replace(".csv", "") + ("_unfinished_tasks" if len(self.current) else ""))
         return output, total
 
     def activate(self): self.active = True

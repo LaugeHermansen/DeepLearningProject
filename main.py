@@ -61,8 +61,7 @@ base_params = dict(
     noise_schedule=np.linspace(1e-4, 0.05, 50).tolist(), # beta
     inference_noise_schedule=[0.0001, 0.001, 0.01, 0.05, 0.2, 0.5],
 
-    #TODO: remove this?
-    # unconditional sample len
+    # unconditional sample len / min audio length of conditional 
     audio_len = 22050*5, # unconditional_synthesis_samples
     
     # own params
