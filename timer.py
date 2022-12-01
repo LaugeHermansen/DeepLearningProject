@@ -8,7 +8,7 @@ class Timer:
         self.current = []
         self.total_running_time = 0
         self.active = active
-    
+     
     def evaluate(self, filename = None):
         
         output = defaultdict(list)
