@@ -1,5 +1,14 @@
 #%%
 
+from main import (
+    get_pretrained_model,
+    # root_directory,
+    base_params,
+    AttrDict,
+    )
+
+base_params = AttrDict(base_params)
+
 
 import numpy as np
 import os
@@ -123,7 +132,7 @@ def mkdir(path: str, strip=True):
 path1 = "D:/DTU/DeepLearningProject/data/NST - Kopi"
 path2 = "D:/DTU/DeepLearningProject/data/NST"
 
-path = path2
+path = path1# + "/individuals"
 
 data = Data(path)
 
@@ -146,7 +155,7 @@ del_file_idx = set()
 _, sample_rate, _, _ = data.load_audio(data[0][0])
 min_length = math.ceil(sample_rate*min_length)
 
-# find stripped files - and strip non-stripped
+# find stripped files - and strip non-stripped if they're long enough
 for i, (filename, is_stripped) in enumerate(tqdm(data)):
     if not is_stripped and not data.stripped_version_exists(filename):
         try:    
@@ -187,17 +196,21 @@ dist_root = dist_root.strip("/")
 individuals = defaultdict(list)
 
 #identify structure
-for idx, f in enumerate(tqdm(data.filenames)):
+for idx, f in enumerate(data.filenames):
     f_ = f.strip("/")
     i = f_.rfind("/")
     ind = f_[:i]
     audio_name = f_[i+1:]
     individuals[ind].append((idx, f, audio_name))
 
-# move files
+individuals = dict(individuals)
+id_to_path_individual = {}
+
+# move files, while maintaining index
 for i, (ind, audio_info) in enumerate(tqdm(individuals.items())):
     i = str(i)
     i = "0"*(3-len(i)) + i
+    id_to_path_individual[i] = ind
     dist = mkdir(f"{dist_root}/{i}")
     for idx, original_path, audio_name in audio_info:
         new_path = f"{dist}/{audio_name}"
@@ -206,8 +219,12 @@ for i, (ind, audio_info) in enumerate(tqdm(individuals.items())):
         del data.audio_lengths[original_path]
         os.rename(original_path, new_path)
 
+# save index file that indexes from new individual id "XXX" to the original path of that individual
+pd.to_pickle(id_to_path_individual, f"{dist_root}/id_to_path_individual")
 
-#%% Colect samples from each individual in "samples" folder
+data.save()
+
+#%% Collect samples from each individual in "examples" folder
 
 total_audio_lengths = {}
 
@@ -217,18 +234,62 @@ for ind in os.listdir(dist_root):
         total_audio_lengths[ind] += data.get_audio_len(f.replace("\\","/"))/sample_rate/60
 
 
-#%%
-
 sorted_by_len = sorted(total_audio_lengths.items(), key=lambda x: x[1], reverse=True)
 
-#%%
-sample_path = mkdir(path + "/samples")
+
+example_path = mkdir(path + "/examples")
 for ind, total_len in tqdm(total_audio_lengths.items()):
     try:
-        from_path = glob(f"{dist_root}/{ind}/*.wav")[0].replace("\\", "/")
-        to_path = f"{sample_path}/{ind}_{int(total_len)}.wav"
+        from_path = glob(f"{dist_root}/{ind}/*.wav")[1].replace("\\", "/")
+        to_path = f"{example_path}/{ind}_{int(total_len)}.wav"
         shutil.copy2(from_path, to_path)
     except IndexError:
         print("Index error", ind, total_len)
     except PermissionError:
         print("Permission denied", ind, total_len)
+
+
+
+#%%
+
+###### resample audio files
+
+data = Data(path)
+
+original_sample_rate = 16000
+
+resample = Resample(original_sample_rate, base_params.sample_rate, )
+
+for f,is_stripped in tqdm(data):
+    audio, sample_rate, _, _ = data.load_audio(f)
+    if sample_rate == original_sample_rate:
+        audio_rs = resample(audio)
+        torchaudio.save(f, audio_rs, base_params.sample_rate)
+
+#%%
+
+female_raw = os.listdir("data/NST/examples/female")
+
+destination_root = mkdir("data/NST/dataset")
+origin_root = "data/NST/individuals"
+total_time = 0
+
+for x in female_raw:
+    ind, temp = x.split("_")
+    time = int(temp.split(".")[0])
+    total_time += time
+    desination_individual = mkdir(f"{destination_root}/{ind}" )
+    origin_individual = f"{origin_root}/{ind}" 
+
+    for f in os.listdir(origin_individual):
+        assert f.endswith(".wav"), ValueError('invalid file found: ' + f)
+        destination_file = f"{desination_individual}/{f}"
+        origin_file = f"{origin_individual}/{f}"
+        try:
+            shutil.copy2(origin_file, destination_file)
+        except IndexError:
+            print("Index error", ind, total_len)
+        except PermissionError:
+            print("Permission denied", ind, total_len)
+
+
