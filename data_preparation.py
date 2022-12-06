@@ -1,8 +1,6 @@
 #%%
 
-from main import (
-    get_pretrained_model,
-    # root_directory,
+from main2 import (
     base_params,
     AttrDict,
     )
@@ -17,8 +15,7 @@ from torchaudio.transforms import Resample
 import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from glob import glob
-from timer import Timer
+from tools import Timer, mkdir, glob, str_replaces
 import math
 from collections import defaultdict
 import shutil
@@ -37,7 +34,7 @@ class Data:
                 success = False
                 print("loading failed")
         if not load or not success:
-            self.filenames = [x.replace("\\","/") for x in glob(f"{path}/**/*.wav", recursive=True)]
+            self.filenames = glob(f"{path}/**/*.wav", recursive=True)
             self.audio_lengths = {f:None for f in self.filenames}
 
     def get_audio_len(self,idx):
@@ -111,34 +108,17 @@ def remove_silence(audio: torch.Tensor, sample_rate: int, kernel_size: float, th
     return out
 
 
-def mkdir(path: str, strip=True):
-    path_ = path.strip("/")
-    idx = [i for i, c in enumerate(path_) if c == "/"] + [len(path_)]
-    add = 0
-    for i, pos in reversed(list(enumerate(idx))):
-        if os.path.exists(path_[:pos]):
-            add = int(os.path.exists(path_[:pos]))
-            break
-    for j in idx[i+add:]:
-        os.mkdir(path_[:j])
-    return path
-        
-
-
-###### init data
-
-
 
 path1 = "D:/DTU/DeepLearningProject/data/NST - Kopi"
 path2 = "D:/DTU/DeepLearningProject/data/NST"
 
-path = path1# + "/individuals"
+PATH = path2# + "/speakers"
 
-data = Data(path)
+data = Data(PATH)
 
 
 #%%
-#### delete too short files
+#### delete too short files - and resample the useful files
 
 errors = []
 
@@ -152,21 +132,23 @@ remove_silent_args = {
 min_length = 5. #seconds
 
 del_file_idx = set()
-_, sample_rate, _, _ = data.load_audio(data[0][0])
-min_length = math.ceil(sample_rate*min_length)
+_, original_sample_rate, _, _ = data.load_audio(data[0][0])
+min_length = math.ceil(original_sample_rate*min_length)
+resample = Resample(original_sample_rate, base_params.sample_rate, )
 
 # find stripped files - and strip non-stripped if they're long enough
-for i, (filename, is_stripped) in enumerate(tqdm(data)):
+for i, (filename, is_stripped) in enumerate(tqdm(data, desc = "remove, strip and resample")):
     if not is_stripped and not data.stripped_version_exists(filename):
         try:    
-            audio, sample_rate, _, _ = data.load_audio(filename)
+            audio, sr, _, _ = data.load_audio(filename)
         except:
             errors.append(filename)
             continue
-        audio = remove_silence(audio, sample_rate, *remove_silent_args.values())
+        audio = remove_silence(audio, sr, *remove_silent_args.values())
         if audio.shape[1] > min_length:
+            if sr == original_sample_rate: audio = resample(audio)
             new_filename = filename[:-4] + "stripped.wav"
-            torchaudio.save(new_filename, audio, sample_rate)
+            torchaudio.save(new_filename, audio[0].unsqueeze(0), base_params.sample_rate)
             data.filenames.append(new_filename)
             data.audio_lengths[new_filename] = audio.shape[1]
 
@@ -175,121 +157,140 @@ data.save()
 #%%
 
 # delete the non-stripped files
-for f, is_stripped in data:
+for f, is_stripped in tqdm(data, desc="removing unused files"):
     if not is_stripped:
         os.remove(f)
         del data.audio_lengths[f]
 
 data.filenames = [f for f, i_s in data if i_s]
 
-
 data.save()
 
+
 #%%
-######### reorganize the files 
+########## reorganize the files 
 
-new_structure_root = "individuals"
-dist_root = path.rstrip("/") + "/" + new_structure_root.strip("/")
-dist_root = dist_root.replace("\\", "/")
-dist_root = dist_root.strip("/")
+data = Data(PATH)
 
-individuals = defaultdict(list)
+speakers_info = {}
+speakers_path_to_id = {}
 
+
+re_str = [
+          ("Scr", "scr"),
+          ("Speech", "data"),
+          ("speech", "data"),
+         ]
+
+n_errors = 0
+n_flags = 0
 #identify structure
-for idx, f in enumerate(data.filenames):
-    f_ = f.strip("/")
-    i = f_.rfind("/")
-    ind = f_[:i]
-    audio_name = f_[i+1:]
-    individuals[ind].append((idx, f, audio_name))
-
-individuals = dict(individuals)
-id_to_path_individual = {}
-
-# move files, while maintaining index
-for i, (ind, audio_info) in enumerate(tqdm(individuals.items())):
-    i = str(i)
-    i = "0"*(3-len(i)) + i
-    id_to_path_individual[i] = ind
-    dist = mkdir(f"{dist_root}/{i}")
-    for idx, original_path, audio_name in audio_info:
-        new_path = f"{dist}/{audio_name}"
-        data.filenames[idx] = new_path
-        data.audio_lengths[new_path] = data.audio_lengths[original_path]
-        del data.audio_lengths[original_path]
-        os.rename(original_path, new_path)
-
-# save index file that indexes from new individual id "XXX" to the original path of that individual
-pd.to_pickle(id_to_path_individual, f"{dist_root}/id_to_path_individual")
-
-data.save()
-
-#%% Collect samples from each individual in "examples" folder
-
-total_audio_lengths = {}
-
-for ind in os.listdir(dist_root):
-    total_audio_lengths[ind] = 0
-    for f in glob(f"{dist_root}/{ind}/*.wav"):
-        total_audio_lengths[ind] += data.get_audio_len(f.replace("\\","/"))/sample_rate/60
-
-
-sorted_by_len = sorted(total_audio_lengths.items(), key=lambda x: x[1], reverse=True)
-
-
-example_path = mkdir(path + "/examples")
-for ind, total_len in tqdm(total_audio_lengths.items()):
+for audio_file_idx, filename in enumerate(tqdm(data.filenames, desc="identify structure of data set")):
     try:
-        from_path = glob(f"{dist_root}/{ind}/*.wav")[1].replace("\\", "/")
-        to_path = f"{example_path}/{ind}_{int(total_len)}.wav"
-        shutil.copy2(from_path, to_path)
-    except IndexError:
-        print("Index error", ind, total_len)
-    except PermissionError:
-        print("Permission denied", ind, total_len)
+        i = filename.rfind("/")
+        original_speaker_path = filename[:i]
+        audio_name = filename[i+1:]
+        spl_file = f"{original_speaker_path.replace('speech', 'data').replace('Speech', 'data')}.spl"
+        with open(spl_file) as spl_file_wrapper:
+            info_list = spl_file_wrapper.read().split("\n")[22:29]
+    except:
+        n_errors += 1
+        continue
+    spl_info = {x.split(">-<")[0][2:]: x.split(">-<")[1] for x in info_list}
+    spl_info["Sex"] = "Unknown" if spl_info["Sex"] == "" else spl_info["Sex"]
+    if original_speaker_path in speakers_path_to_id:
+        speaker_id = speakers_path_to_id[original_speaker_path]
+        assert speakers_info[speaker_id]["spl_file"] == spl_file
+    else:
+        speaker_id = str(len(speakers_path_to_id))
+        speaker_id = "0"*(3-len(speaker_id)) + speaker_id
+        speakers_path_to_id[original_speaker_path] = speaker_id
+        speakers_info[speaker_id] = {
+                                        "original_speaker_path": original_speaker_path,
+                                        "spl_info": spl_info,
+                                        "audio_names": [],
+                                        "spl_file": spl_file
+                                    }
+    speakers_info[speaker_id]["audio_names"].append((audio_file_idx, audio_name))
 
+print(n_errors, "files were omitted due to an error getting the spl file")
+pd.to_pickle(speakers_info, PATH + "/speakers_info.pkl")
+pd.to_pickle(speakers_path_to_id, PATH + "/speakers_path_to_id.pkl")
 
 
 #%%
+data = Data(PATH)
 
-###### resample audio files
+np.random.seed(42)
+new_structure_root = "dataset"
+destination_root = PATH.rstrip("/") + "/" + new_structure_root.strip("/")
+destination_root = mkdir(destination_root)
 
-data = Data(path)
 
-original_sample_rate = 16000
+#------- train/test split
 
-resample = Resample(original_sample_rate, base_params.sample_rate, )
+get_split_property = lambda speaker_info: speaker_info["spl_info"]["Sex"]
+train_path = mkdir(f"{destination_root}/train")
+test_path = mkdir(f"{destination_root}/test")
 
-for f,is_stripped in tqdm(data):
-    audio, sample_rate, _, _ = data.load_audio(f)
-    if sample_rate == original_sample_rate:
-        audio_rs = resample(audio)
-        torchaudio.save(f, audio_rs, base_params.sample_rate)
 
-#%%
+test_size_ratio = 0.2
+unseen_test_speakers_ratio = 0.1
 
-female_raw = os.listdir("data/NST/examples/female")
+#--------------------------
 
-destination_root = mkdir("data/NST/dataset")
-origin_root = "data/NST/individuals"
-total_time = 0
 
-for x in female_raw:
-    ind, temp = x.split("_")
-    time = int(temp.split(".")[0])
-    total_time += time
-    desination_individual = mkdir(f"{destination_root}/{ind}" )
-    origin_individual = f"{origin_root}/{ind}" 
+removed_files = set()
+added_files = set()
 
-    for f in os.listdir(origin_individual):
-        assert f.endswith(".wav"), ValueError('invalid file found: ' + f)
-        destination_file = f"{desination_individual}/{f}"
-        origin_file = f"{origin_individual}/{f}"
-        try:
-            shutil.copy2(origin_file, destination_file)
-        except IndexError:
-            print("Index error", ind, total_len)
-        except PermissionError:
-            print("Permission denied", ind, total_len)
 
+n_train = 0
+n_test = 0
+
+file_exists_errors = []
+speakers_info_items = list(speakers_info.items())
+speaker_mask = np.random.permutation(len(speakers_info_items))
+
+
+n_speakers = defaultdict(int)
+for speaker_info in speakers_info.values():
+    n_speakers[get_split_property(speaker_info)] += 1
+n_speakers = dict(n_speakers)
+n_unseen = {key:max(1,int(unseen_test_speakers_ratio*value)) for key,value in n_speakers.items()}
+
+
+test_speakers  = set()
+train_speakers = set()
+
+count_speakers = {key:0 for key in n_speakers}
+for speaker_idx in tqdm(speaker_mask, desc = "Train/test split"):
+    speaker_id, speaker_info = speakers_info_items[speaker_idx]
+    split_property = get_split_property(speaker_info)
+    n_audio_names = len(speaker_info["audio_names"])
+    split_audio = int(n_audio_names*test_size_ratio)
+    audio_mask = np.random.permutation(n_audio_names)
+    for count_audio, audio_idx in enumerate(audio_mask):
+        audio_idx, audio_name = speaker_info['audio_names'][audio_idx]
+        is_test_point = (count_speakers[split_property] < n_unseen[split_property] or count_audio < split_audio)
+        if is_test_point:
+            temp = mkdir(f"{test_path}/{split_property}/{speaker_id}")
+            n_test += 1
+            test_speakers.add(speaker_idx)
+        else:
+            temp = mkdir(f"{train_path}/{split_property}/{speaker_id}")
+            n_train += 1
+            train_speakers.add(speaker_idx)
+        destination_file = f"{temp}/{audio_name}"
+        original_file_path = data[audio_idx][0]
+        data.filenames[audio_idx] = destination_file
+        data.audio_lengths[destination_file] = data.audio_lengths.pop(original_file_path)
+        os.rename(original_file_path, destination_file)
+        # assert os.path.exists(original_file_path)
+        # assert original_file_path not in removed_files
+        # assert destination_file not in added_files
+        # removed_files.add(original_file_path)
+        # added_files.add(destination_file)
+    count_speakers[split_property] += 1
+
+    
 

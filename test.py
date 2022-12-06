@@ -45,7 +45,7 @@ class LaugesData(Dataset):
         audio, sample_rate = torchaudio.load(self.audio_filenames[idx])
         spectrogram = np.load(self.spec_filenames[idx]).T
         return {
-                'audio': audio.squeeze(0),
+                'audio': audio[0],
                 'spectrogram': spectrogram
                 }
 
@@ -103,3 +103,44 @@ data.prepare_data()
 #%%
 
 
+
+a,sr = torchaudio.load("u0091021stripped.wav")
+torchaudio.save("u0091021stripped_single.wav", a[0].unsqueeze(0), sr)
+
+
+#%%
+
+filenames_stereo = glob("data/Test/**/*.wav")
+
+for f in filenames_stereo:
+    a,sr = torchaudio.load(f)
+    torchaudio.save(f[:-4] + "_mono.wav", a[0].unsqueeze(0), sr)
+
+
+#%%
+
+
+filenames_mono = glob("data/Test/**/*_mono.wav")
+filenames_stereo = [x[:-9] + ".wav" for x in filenames_mono]
+
+#%%
+
+import torchaudio
+from timer import Timer
+
+timer = Timer()
+
+n = 1000
+
+
+for mono, stereo in tqdm(zip(filenames_mono[:n], filenames_stereo[:n]), total = len(filenames_mono[:n])):
+    
+    timer("stereo")
+    a,sr = torchaudio.load(stereo)
+    timer()
+
+    timer("mono")
+    a,sr = torchaudio.load(mono)
+    timer()
+
+timer.evaluate()
