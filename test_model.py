@@ -234,7 +234,7 @@ idx_freq = np.where(temp_reductions == r_freq)[0][0]
 
 plt.rcParams['figure.dpi'] = 400
 
-fig, axs = plt.subplots(1, 2, figsize=(12,4))
+fig, axs = plt.subplots(1, 2, figsize=(13,3.7))
 
 im = axs[0].imshow(losses_img_mean[::-1],cmap=get_cmap())
 
@@ -260,20 +260,20 @@ fig.colorbar(im, ax =axs[0])
 l_mean = losses_img_mean[idx_freq]
 l_sd = losses_img_sd[idx_freq]
 axs[1].plot(temp_reductions, l_mean, label=f"$r_{{freq}}$ = {r_freq}")
-axs[1].fill_between(temp_reductions, l_mean-l_sd, l_mean+l_sd, alpha=0.5, label="95% confidence interval")
+axs[1].fill_between(temp_reductions, l_mean-l_sd, l_mean+l_sd, alpha=0.3, label="95% confidence interval")
 
 
 # plot loss for r_time = constant
 l_mean = losses_img_mean[:,idx_time]
 l_sd = losses_img_sd[:,idx_time]
 axs[1].plot(temp_reductions, l_mean, label=f"$r_{{time}}$ = {r_time}")
-axs[1].fill_between(temp_reductions, l_mean-l_sd, l_mean+l_sd, alpha=0.5, label="95% confidence interval")
+axs[1].fill_between(temp_reductions, l_mean-l_sd, l_mean+l_sd, alpha=0.3, label="95% confidence interval")
 
 # plot loss for r_time = r_freq
 l_mean = losses_img_mean.diagonal()
 l_sd = losses_img_sd.diagonal()
 axs[1].plot(temp_reductions, l_mean, label="$r_{time} = r_{freq}$")
-axs[1].fill_between(temp_reductions, l_mean-l_sd, l_mean+l_sd, alpha=0.5, label="95% confidence interval")
+axs[1].fill_between(temp_reductions, l_mean-l_sd, l_mean+l_sd, alpha=0.3, label="95% confidence interval")
 axs[1].legend()
 axs[1].set_xlabel("Scale on time/frequency axis")
 axs[1].set_ylabel("Mean error")
@@ -304,9 +304,9 @@ spectrograms.append(np.load(filename_spec_full)[:,spectrogram_slice])
 spectrograms.append(np.load(filename_spec_reduced)[:,spectrogram_slice])
 
 
-def plot_spectrogram(spec, ax, title):
+def plot_spectrogram(spec, ax, title, r=1):
     ax.imshow(spec, origin="upper")
-    ax.set_xticklabels(np.round(ax.get_xticks()/params.sample_rate*params.hop_samples, 3))
+    ax.set_xticklabels(np.round(ax.get_xticks()/params.sample_rate*params.hop_samples/r, 3))
     ax.set_yticks([])
     ax.set_title(title)
     ax.set_xlabel("Time")
@@ -327,3 +327,22 @@ plot_spectrogram(spectrograms[3], axs[1], f"Reduced ($r_{{freq}}={r_freq}, r_{{t
 fig.suptitle("Spectrogram from generated audio")
 
 fig.savefig("poster_report/reduced_generation_quality_spectrograms", bbox_inches = 'tight')
+
+#%%
+
+spectrogram_path = filename_audio_original + ".spec.npy"
+audio_path = filename_audio_original
+
+spectrogram = np.load(spectrogram_path)
+spectrogram_reduced = np.expand_dims(reduce(spectrogram, (r_freq, r_time)),0)
+
+audio, sr = torchaudio.load(audio_path)
+audio_gen = model.predict_step({"spectrogram": spectrogram}, 0)[0]
+audio_gen_reduced = model.predict_step({"spectrogram": spectrogram_reduced}, 0)[0]
+
+#%%
+
+torchaudio.save(f"poster_report/{idx}_audio_original.wav", audio, sr)
+torchaudio.save(f"poster_report/{idx}_audio_gen.wav", audio_gen.cpu().unsqueeze(0), sr)
+torchaudio.save(f"poster_report/{idx}_audio_gen_reduced.wav", audio_gen_reduced.cpu().unsqueeze(0), sr)
+
