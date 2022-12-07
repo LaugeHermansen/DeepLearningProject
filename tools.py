@@ -2,7 +2,7 @@ from collections import defaultdict
 import pandas as pd
 from time import time_ns
 import os
-
+from matplotlib.colors  import LinearSegmentedColormap
 from glob import glob as crappy_glob
 
 
@@ -78,6 +78,19 @@ def str_replaces(original_string: str, replace_tuples):
     for old, new in replace_tuples:
         original_string = original_string.replace(old, new)
     return original_string
+
+
+def get_cmap(colors=None):
+    # colors = [(153/255, 0, 0), (1, 1, 1), (142/255, 143/255, 147/255)][::-1]  # R -> G -> B
+    colors = [(207/255, 49/255, 51/255), (1, 1, 1), (109/255, 111/255, 114/255)][::-1] if colors is None else colors  # R -> G -> B
+    n_bin = 255  # Discretizes the interpolation into bins
+    cmap_name = 'my_list'
+
+    # Create the colormap
+    return LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bin)
+
+
+
 
 if __name__ == "__main__":
     timer = Timer()
