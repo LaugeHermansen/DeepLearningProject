@@ -56,10 +56,22 @@ class Timer:
             self.data[task]["total time squared"] += (stop-start)**2
             self.data[task]["executions"] += 1
     
-    def __call__(self, label=None, stop_previous=True):
-        if label is None: self.stop()
-        else: self.start(label, stop_previous)
+    # def __call__(self, label=None, stop_previous=True):
+    #     if self.active:
+    #         if label is None: self.stop()
+    #         else: self.start(label, stop_previous)
 
+    def __call__(self, label=None, stop_previous=True):
+        if self.active:
+            return ScopeTimer(self, label)
+
+class ScopeTimer:
+    def __init__(self, timer, label):
+        self.timer = timer
+        self.label = label
+        self.timer.start(self.label, stop_previous=False)
+    def __del__(self):
+        self.timer.stop()
 
 def mkdir(path: str, strip=True):
     path_ = path.strip("/")
