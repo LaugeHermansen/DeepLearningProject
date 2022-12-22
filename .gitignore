@@ -2,6 +2,7 @@
 /archive/**
 /model_checkpoints/**
 /tests/**
+/logs/**
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
