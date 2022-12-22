@@ -1,0 +1,49 @@
+Hello HPC
+Traceback (most recent call last):
+  File "test_hpc.py", line 3, in <module>
+    import test_gpu
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/Christians_seje_hpc_scripts/test_gpu.py", line 1, in <module>
+    from torch.cuda import is_available
+ImportError: No module named torch.cuda
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@hpc.dtu.dk>
+Subject: Job 15094012: <test_hpc_J> in cluster <dcc> Exited
+
+Job <test_hpc_J> was submitted from host <n-62-30-2> by user <s204111> in cluster <dcc> at Thu Dec 22 13:14:24 2022
+Job was executed on host(s) <n-62-31-22>, in queue <hpc>, as user <s204111> in cluster <dcc> at Thu Dec 22 13:14:25 2022
+</zhome/56/e/155505> was used as the home directory.
+</zhome/56/e/155505/Desktop/DeepLearningProject/Christians_seje_hpc_scripts> was used as the working directory.
+Started at Thu Dec 22 13:14:25 2022
+Terminated at Thu Dec 22 13:14:25 2022
+Results reported at Thu Dec 22 13:14:25 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#BSUB -J test_hpc_J
+
+#BSUB -R "rusage[mem=1024MB]"
+
+python test_hpc.py
+
+------------------------------------------------------------
+
+Exited with exit code 1.
+
+Resource usage summary:
+
+    CPU time :                                   0.44 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     1024.00 MB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   42 sec.
+    Turnaround time :                            1 sec.
+
+The output (if any) is above this job summary.
+
