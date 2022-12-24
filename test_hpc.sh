@@ -1,6 +1,6 @@
 #!/bin/sh
 #BSUB -J testjob
-#BSUB R "rusage[mem=1GB]"
+#BSUB R "rusage[mem=1G]"
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 
