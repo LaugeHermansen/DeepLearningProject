@@ -2,7 +2,6 @@
 #BSUB -q gpuv100
 #BSUB -J experiment_from_bottom
 #BSUB -n 4
-#BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -R "rusage[mem=1GB]"
 #BSUB -R "span[hosts=1]" 
 #BSUB -o experiment_from_bottom_%J.out

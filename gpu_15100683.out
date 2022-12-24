@@ -1,0 +1,80 @@
+False
+
+------------------------------------------------------------
+Sender: LSF System <lsfadmin@hpc.dtu.dk>
+Subject: Job 15100683: <testjob> in cluster <dcc> Done
+
+Job <testjob> was submitted from host <n-62-27-17> by user <s204111> in cluster <dcc> at Sat Dec 24 06:10:43 2022
+Job was executed on host(s) <n-62-31-23>, in queue <hpc>, as user <s204111> in cluster <dcc> at Sat Dec 24 06:10:44 2022
+</zhome/56/e/155505> was used as the home directory.
+</zhome/56/e/155505/Desktop/DeepLearningProject> was used as the working directory.
+Started at Sat Dec 24 06:10:44 2022
+Terminated at Sat Dec 24 06:10:53 2022
+Results reported at Sat Dec 24 06:10:53 2022
+
+Your job looked like:
+
+------------------------------------------------------------
+# LSBATCH: User input
+#!/bin/sh
+### General options
+### -- specify queue --
+###BSUB -q gpuv100
+### -- set the job Name --
+#BSUB -J testjob
+### -- ask for number of cores (default: 1) --
+#BSUB -n 1
+### -- Select the resources: 1 gpu in exclusive process mode --
+###BSUB -gpu "num=1:mode=exclusive_process"
+### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
+#BSUB -W 0:05
+# request 5GB of system-memory
+#BSUB -R "rusage[mem=1GB]"
+### -- set the email address --
+### please uncomment the following line and put in your e-mail address,
+### if you want to receive e-mail notifications on a non-default address
+###BSUB -u your_email_address
+### -- send notification at start --
+###BSUB -B
+### -- send notification at completion--
+###BSUB -N
+### -- Specify the output and error file. %J is the job-id --
+### -- -o and -e mean append, -oo and -eo mean overwrite --
+#BSUB -o gpu_%J.out
+#BSUB -e gpu_%J.err
+# -- end of LSF options --
+
+source diffwave/bin/activate
+module load pandas/1.4.4-python-3.10.7
+module load numpy/1.23.3-python-3.10.7-openblas-0.3.21
+module load matplotlib/3.6.0-numpy-1.23.3-python-3.10.7
+module load cuda
+
+
+python Christians_seje_hpc_scripts/test_gpu.py
+
+------------------------------------------------------------
+
+Successfully completed.
+
+Resource usage summary:
+
+    CPU time :                                   2.76 sec.
+    Max Memory :                                 -
+    Average Memory :                             -
+    Total Requested Memory :                     1024.00 MB
+    Delta Memory :                               -
+    Max Swap :                                   -
+    Max Processes :                              -
+    Max Threads :                                -
+    Run time :                                   88 sec.
+    Turnaround time :                            10 sec.
+
+The output (if any) is above this job summary.
+
+
+
+PS:
+
+Read file <gpu_15100683.err> for stderr output of this job.
+
