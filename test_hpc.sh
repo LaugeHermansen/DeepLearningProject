@@ -11,4 +11,5 @@ module load matplotlib/3.6.0-numpy-1.23.3-python-3.10.7
 module load cuda
 
 
-python Christians_seje_hpc_scripts/test_gpu.py
+### python Christians_seje_hpc_scripts/test_gpu.py
+python test_hpc.py
