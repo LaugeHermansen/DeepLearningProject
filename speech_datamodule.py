@@ -146,8 +146,8 @@ class SpeechDataModule(pl.LightningDataModule):
     def setup(self, stage):
         # Assign Train/val split(s) for use in Dataloaders
         if stage == 'fit':
-            audio_path_train = os.path.join(self.params.data_dir, self.params.train_dir)
-            spec_path_train = os.path.join(self.params.project_dir, 'spectrograms', self.params.train_dir)
+            audio_path_train = os.path.join(self.params.data_dir_root, self.params.train_dir)
+            spec_path_train = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.train_dir)
             if self.params.val_dir is None:
                 # load train set - split train set into train and val
                 temp = self.data_class(audio_path_train, spec_path_train)
@@ -156,8 +156,8 @@ class SpeechDataModule(pl.LightningDataModule):
                 self.train_set, self.val_set = random_split(temp, [len(temp)-len_val_set, len_val_set], generator=torch.Generator().manual_seed(42))
             else:
                 # load train and val set
-                audio_path_val = os.path.join(self.params.data_dir, self.params.val_dir)
-                spec_path_val = os.path.join(self.params.project_dir, 'spectrograms', self.params.val_dir)
+                audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
+                spec_path_val = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.val_dir)
                 
                 self.val_set = self.data_class(audio_path_val, spec_path_val)
                 self.train_set = self.data_class(audio_path_train, spec_path_train)
@@ -165,8 +165,8 @@ class SpeechDataModule(pl.LightningDataModule):
                 self.train_set.prepare_data(self.params)
             
         if stage == 'test':
-            audio_path_test = os.path.join(self.params.data_dir, self.params.test_dir)
-            spec_path_test = os.path.join(self.params.project_dir, 'spectrograms', self.params.test_dir)
+            audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
+            spec_path_test = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.test_dir)
             self.test_set = self.data_class(audio_path_test, spec_path_test)
             self.test_set.prepare_data(self.params)
 
