@@ -1,6 +1,6 @@
 #%%
 
-from playing_with_pl import DataModule, Net, timer, CSVLogger
+from archive_2.playing_with_pl import DataModule, Net, timer, CSVLogger
 import pytorch_lightning as pl
 import numpy as np
 

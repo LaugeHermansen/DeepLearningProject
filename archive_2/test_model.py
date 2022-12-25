@@ -26,7 +26,7 @@ from math import sqrt, floor
 from tqdm import tqdm
 from datetime import timedelta
 
-from eat_my_balls import DiffWave, get_pretrained_model, AttrDict, base_params, SpeechDataModule
+from archive_2.eat_my_balls import DiffWave, get_pretrained_model, AttrDict, base_params, SpeechDataModule
 from tools import mkdir, glob, Timer, get_cmap
 import os
 import time
