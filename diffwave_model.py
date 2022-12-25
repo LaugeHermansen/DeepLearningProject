@@ -8,8 +8,9 @@ import pytorch_lightning as pl
 
 from math import sqrt
 from glob import glob
-from tools import AttrDict
+from tools import AttrDict, Timer
 
+timer_model = Timer()
 
 def Conv1d(*args, **kwargs):
     layer = nn.Conv1d(*args, **kwargs)
@@ -153,7 +154,8 @@ class DiffWave(pl.LightningModule):
     def process_batch(self, batch):
         # for param in self.parameters():
         #     param.grad = None
-            
+        timer_model("process batch")
+
         audio, spectrogram = batch['audio'], batch['spectrogram']
 
         N, T = audio.shape
@@ -169,6 +171,7 @@ class DiffWave(pl.LightningModule):
 
             predicted = self(noisy_audio, t, spectrogram)
             loss = self.loss_fn(noise, predicted.squeeze(1))
+        timer_model()
         
         return loss
     

@@ -25,7 +25,10 @@ from pytorch_lightning.loggers import CSVLogger
 from speech_datamodule import SpeechDataModule
 
 from datetime import timedelta
-from tools import mkdir
+from tools import mkdir, Timer
+
+timer_experiment_helpers = Timer()
+
 
 #%%
 
@@ -75,7 +78,12 @@ def get_trainer(params, exp_name, global_seed):
 
 def fit_model(model, params, exp_name, global_seed):
 	
+
     pl.seed_everything(global_seed, workers=True)
+    timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params)
     trainer = get_trainer(params, exp_name, global_seed)
+    timer_experiment_helpers("fitting model")
     trainer.fit(model, data)
+    timer_experiment_helpers()
+

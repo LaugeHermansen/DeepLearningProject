@@ -79,22 +79,19 @@ class Timer:
             self.data[task]["total time squared"] += (stop-start)**2
             self.data[task]["executions"] += 1
     
-    # def __call__(self, label=None, stop_previous=True):
-    #     if self.active:
-    #         if label is None: self.stop()
-    #         else: self.start(label, stop_previous)
-
     def __call__(self, label=None, stop_previous=True):
         if self.active:
-            return ScopeTimer(self, label)
+            if label is None: self.stop()
+            else: self.start(label, stop_previous)
+    
+    def __add__(self, other):
+        assert isinstance(other, Timer), "Can only add timers together"
+        # make sure that self.data and other.data don't have the same keys - raise assertion error if they do
+        assert len(set(self.data.keys()).intersection(set(other.data.keys()))) == 0, "Cannot add timers with overlapping tasks"
 
-class ScopeTimer:
-    def __init__(self, timer, label):
-        self.timer = timer
-        self.label = label
-        self.timer.start(self.label, stop_previous=False)
-    def __del__(self):
-        self.timer.stop()
+        self.data.update(other.data)
+        self.total_running_time += other.total_running_time
+        return self
 
 def str_replaces(original_string: str, replace_tuples):
     for old, new in replace_tuples:
