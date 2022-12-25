@@ -1,13 +1,5 @@
 #%%
 
-from main2 import (
-    base_params,
-    AttrDict,
-    )
-
-base_params = AttrDict(base_params)
-
-
 import numpy as np
 import os
 import torchaudio
@@ -20,6 +12,11 @@ import math
 from collections import defaultdict
 import shutil
 import pandas as pd
+
+from experiment_main import base_params
+from tools import AttrDict
+
+base_params = AttrDict(base_params)
 
 #%%
 ####### helper functions and classes
