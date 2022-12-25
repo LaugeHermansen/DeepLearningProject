@@ -21,7 +21,7 @@ import os
 
 from tools import AttrDict, mkdir, Timer
 
-from diffwave_model import DiffWave, timer_model
+from diffwave_model import DiffWave
 from experiment_helpers import fit_model
 
 
@@ -77,7 +77,7 @@ params = AttrDict(base_params)
 def main():
 
 
-	#########################################################################
+    #########################################################################
     # -------------- specify the options for the eperiment ------------------
     
     use_timing = True
@@ -100,7 +100,7 @@ def main():
 
     timers = fit_model(model, params, experiment_name, global_seed, max_epochs, use_timing)
     
-    sum_timer = timer_model + sum(timers)
+    sum_timer = sum(timers)
     sum_timer.evaluate(os.path.join("experiments", f"{experiment_name}_{global_seed}", "timer.csv"))
 
 if __name__ == '__main__':

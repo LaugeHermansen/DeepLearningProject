@@ -55,19 +55,19 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 
     # save model every 1 hour
     checkpoint_callback_time = ModelCheckpoint(
-		dirpath=save_dir,
-		filename='time-{epoch}-{val_loss:.6f}',
-		train_time_interval=timedelta(hours=1)
-		)
-	
-	# save k best end of epoch models
+        dirpath=save_dir,
+        filename='time-{epoch}-{val_loss:.6f}',
+        train_time_interval=timedelta(hours=1)
+        )
+    
+    # save k best end of epoch models
     checkpoint_callback_top_k = ModelCheckpoint(
-		dirpath=save_dir,
-		filename='k-{epoch}-{val_loss:.6f}',
-		save_top_k=3,
-		monitor='val_loss',
-		mode='min'
-		)
+        dirpath=save_dir,
+        filename='k-{epoch}-{val_loss:.6f}',
+        save_top_k=3,
+        monitor='val_loss',
+        mode='min'
+        )
     
     # create logger
     logger = CSVLogger(
@@ -93,8 +93,8 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 
 
 def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_timing=False):
-	
-    timer_experiment_helpers = Timer()
+    
+    timer_experiment_helpers = Timer(use_timing)
     model.use_timing(True)
     pl.seed_everything(global_seed, workers=True)
     timer_experiment_helpers("preprocessing data")
@@ -106,7 +106,8 @@ def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_ti
     update_gitignore(params)
 
     #return timers
-    return data.val_set.timer, data.test_set.timer, timer_experiment_helpers, model.timer
+    return data.val_set.timer, data.train_set.timer, timer_experiment_helpers, model.timer
+    
 
 
 

@@ -127,7 +127,6 @@ class DiffWave(pl.LightningModule):
         self.autocast = torch.cuda.amp.autocast(enabled=params.get('fp16', False))
 
     def use_timing(self, use_timing):
-        self.timer.use_timing = use_timing
         self.timer = Timer(use_timing)
 
     def forward(self, audio, diffusion_step, spectrogram):

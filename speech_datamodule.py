@@ -142,7 +142,9 @@ class SpeechDatasetRAM(SpeechDatasetBase):
 
 class SpeechDataModule(pl.LightningDataModule):
     def __init__(self, params, use_timing=False):
+        
         super().__init__()
+        self.use_timing = use_timing
         self.params = params
         
         # this is for improving speed
@@ -176,6 +178,8 @@ class SpeechDataModule(pl.LightningDataModule):
                 self.val_set = self.data_class(audio_path_val, spec_path_val)
                 self.train_set = self.data_class(audio_path_train, spec_path_train)
 
+            self.val_set.timer = Timer(self.use_timing)
+            self.train_set.timer = Timer(self.use_timing)
             self.val_set.prepare_data(self.params)
             self.train_set.prepare_data(self.params)
             
@@ -183,6 +187,7 @@ class SpeechDataModule(pl.LightningDataModule):
             audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
             spec_path_test = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.test_dir)
             self.test_set = self.data_class(audio_path_test, spec_path_test)
+            self.test_set.timer = Timer(self.use_timing)
             self.test_set.prepare_data(self.params)
 
     

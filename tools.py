@@ -86,10 +86,8 @@ class Timer:
     
     def __add__(self, other):
         assert isinstance(other, Timer), "Can only add timers together"
-        # make sure that self.data and other.data don't have the same keys - raise assertion error if they do
-        assert len(set(self.data.keys()).intersection(set(other.data.keys()))) == 0, "Cannot add timers with overlapping tasks"
-
-        self.data.update(other.data)
+        for task, time in other.data.items():
+            self.data[task] += time
         self.total_running_time += other.total_running_time
         return self
 
