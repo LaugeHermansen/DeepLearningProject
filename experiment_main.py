@@ -86,7 +86,8 @@ def main():
 
     # costum parameters
     params.load_data_to_ram = False
-
+    
+    max_epochs = 2
 
     # load the model somehow
     model = DiffWave(params)
@@ -96,7 +97,9 @@ def main():
 
 
 
-    fit_model(model, params, experiment_name, global_seed)
+    fit_model(model, params, experiment_name, global_seed, max_epochs)
+    sum_timer = timer_data + timer_experiment_helpers + timer_model
+    print(sum_timer.evaluate())
 
 if __name__ == '__main__':
     main()

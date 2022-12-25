@@ -32,9 +32,9 @@ timer_experiment_helpers = Timer()
 
 #%%
 
-def get_trainer(params, exp_name, global_seed):
+def get_trainer(params, exp_name, global_seed, max_epochs):
 
-    save_dir = os.join(params.project_dir, 'experiments', f'{exp_name}_{global_seed}')
+    save_dir = os.path.join(params.project_dir, 'experiments', f'{exp_name}_{global_seed}')
     mkdir(save_dir)
 
     # save model every 1 hour
@@ -67,7 +67,7 @@ def get_trainer(params, exp_name, global_seed):
     trainer = pl.Trainer(
         callbacks=[checkpoint_callback_time, checkpoint_callback_top_k], # runs at the end of every train loop
         log_every_n_steps=10,
-        max_epochs=1000,
+        max_epochs=max_epochs,
         accelerator=params.accelerator,
         # devices=1,
         logger=logger,
@@ -76,13 +76,13 @@ def get_trainer(params, exp_name, global_seed):
     return trainer
 
 
-def fit_model(model, params, exp_name, global_seed):
+def fit_model(model, params, exp_name, global_seed, max_epochs):
 	
 
     pl.seed_everything(global_seed, workers=True)
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params)
-    trainer = get_trainer(params, exp_name, global_seed)
+    trainer = get_trainer(params, exp_name, global_seed, max_epochs)
     timer_experiment_helpers("fitting model")
     trainer.fit(model, data)
     timer_experiment_helpers()
