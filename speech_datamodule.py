@@ -13,8 +13,9 @@ import pytorch_lightning as pl
 from math import floor
 from glob import glob
 from tqdm import tqdm
-from tools import mkdir
+from tools import mkdir, Timer
 
+timer_data = Timer()
 
 class SpeechDatasetBase(Dataset):
     def __init__(self, audio_dir, spec_dir):
@@ -87,11 +88,13 @@ class SpeechDatasetBase(Dataset):
         return len(self.audio_filenames)
     
     def _load_one_item(self, idx):
+        timer_data("loading audio and spectrogram")
         audio_file_path = self.audio_file_paths[idx]
         spec_file_path = self.spec_file_paths[idx]
         signal, _ = torchaudio.load(audio_file_path)
         spectrogram = np.load(spec_file_path).T
         assert signal.shape[1] == 1, "Only mono audio is supported"
+        timer_data()
         return signal.squeeze(0), spectrogram
 
 class SpeechDatasetDisk(SpeechDatasetBase):

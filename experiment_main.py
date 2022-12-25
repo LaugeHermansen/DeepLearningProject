@@ -18,10 +18,11 @@ import numpy as np
 
 import torch
 
-from tools import AttrDict, mkdir
-from diffwave_model import DiffWave
+from tools import AttrDict, mkdir, Timer
 
-from experiment_helpers import fit_model
+from diffwave_model import DiffWave, timer_model
+from speech_datamodule import timer_data
+from experiment_helpers import fit_model, timer_experiment_helpers
 
 
 base_params = dict(
@@ -84,7 +85,7 @@ def main():
     global_seed = 42
 
     # costum parameters
-    params.load_data_to_ram = True
+    params.load_data_to_ram = False
 
 
     # load the model somehow
