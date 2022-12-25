@@ -95,7 +95,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_timing=False):
     
     timer_experiment_helpers = Timer(use_timing)
-    model.use_timing(True)
+    model.use_timing(use_timing)
     pl.seed_everything(global_seed, workers=True)
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params, use_timing=use_timing)

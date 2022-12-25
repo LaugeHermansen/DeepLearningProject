@@ -79,9 +79,6 @@ def main():
 
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
-    
-    use_timing = True
-
     # experiment name and seed
     experiment_name = 'first_try'
     global_seed = 42
@@ -98,13 +95,7 @@ def main():
     #########################################################################
 
 
-    timers = fit_model(model, params, experiment_name, global_seed, max_epochs, use_timing)
-    
-    sum_timer = timers[0]
-    for timer in timers[1:]:
-        sum_timer += timer
-
-    sum_timer.evaluate(os.path.join("experiments", f"{experiment_name}_{global_seed}", "timer.csv"))
+    fit_model(model, params, experiment_name, global_seed, max_epochs)
 
 if __name__ == '__main__':
     main()
