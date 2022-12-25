@@ -22,15 +22,31 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import CSVLogger
 
-from speech_datamodule import SpeechDataModule
+from speech_datamodule import SpeechDataModule, timer_data
 
 from datetime import timedelta
 from tools import mkdir, Timer
 
 timer_experiment_helpers = Timer()
 
-
 #%%
+
+def update_gitignore(params):
+    
+    with open(".gitignore", "r") as g:
+        content = g.read().split("\n")
+    with open(".gitignore", "a") as g:
+        root = params.project_dir_root
+        names = [params[name] for name in ["checkpoint_dir", "train_dir", "test_dir", "val_dir"] if not (params[name] is None)]
+        names += ["experiments", "spectrograms"]
+        for name in names:
+            path = os.path.join(root, name).replace("\\", "/") + "/**"
+            if not path in content:
+                g.write("\n" + path)
+                print(f'added to .gitignore: \"{path}\"')
+                    
+                
+   
 
 def get_trainer(params, exp_name, global_seed, max_epochs):
 
@@ -86,4 +102,10 @@ def fit_model(model, params, exp_name, global_seed, max_epochs):
     timer_experiment_helpers("fitting model")
     trainer.fit(model, data)
     timer_experiment_helpers()
+    update_gitignore(params)
 
+
+
+if __name__ == "__main__":
+    from experiment_main import params
+    update_gitignore(params)

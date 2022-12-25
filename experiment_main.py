@@ -17,12 +17,12 @@
 import numpy as np
 
 import torch
+import os
 
 from tools import AttrDict, mkdir, Timer
 
 from diffwave_model import DiffWave, timer_model
-from speech_datamodule import timer_data
-from experiment_helpers import fit_model, timer_experiment_helpers
+from experiment_helpers import fit_model, timer_experiment_helpers, timer_data
 
 
 base_params = dict(
@@ -87,7 +87,7 @@ def main():
     # costum parameters
     params.load_data_to_ram = False
     
-    max_epochs = 2
+    max_epochs = 1
 
     # load the model somehow
     model = DiffWave(params)
@@ -96,10 +96,10 @@ def main():
     #########################################################################
 
 
-
     fit_model(model, params, experiment_name, global_seed, max_epochs)
+    
     sum_timer = timer_data + timer_experiment_helpers + timer_model
-    print(sum_timer.evaluate())
+    sum_timer.evaluate(os.path.join("experiments", f"{experiment_name}_{global_seed}", "timer.csv"))
 
 if __name__ == '__main__':
     main()

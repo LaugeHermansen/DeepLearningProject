@@ -15,11 +15,12 @@ from glob import glob
 from tqdm import tqdm
 from tools import mkdir, Timer
 
-timer_data = Timer()
+timer_data = Timer(False)
 
 class SpeechDatasetBase(Dataset):
-    def __init__(self, audio_dir, spec_dir):
+    def __init__(self, audio_dir, spec_dir, timer=timer_data):
         super().__init__()
+        self.timer = timer
         self.audio_dir = audio_dir
         self.spec_dir = spec_dir
         self.audio_file_paths = np.array([os.path.realpath(f) for f in glob(f"{audio_dir}/**/*.wav", recursive=True)])
@@ -88,19 +89,21 @@ class SpeechDatasetBase(Dataset):
         return len(self.audio_filenames)
     
     def _load_one_item(self, idx):
-        timer_data("loading audio and spectrogram")
+        self.timer("_load_one_item()")
         audio_file_path = self.audio_file_paths[idx]
         spec_file_path = self.spec_file_paths[idx]
         signal, _ = torchaudio.load(audio_file_path)
         spectrogram = np.load(spec_file_path).T
-        assert signal.shape[1] == 1, "Only mono audio is supported"
-        timer_data()
+        assert signal.shape[0] == 1, f"Only mono audio is supported, found {signal.shape}"
+        self.timer()
         return signal.squeeze(0), spectrogram
 
 class SpeechDatasetDisk(SpeechDatasetBase):
 
     def __getitem__(self, idx):
+        self.timer("loading audio and spectrogram")
         signal, spectrogram  = self._load_one_item(idx)
+        self.timer()
         return {
             'audio': signal,
             'spectrogram': spectrogram
@@ -124,9 +127,10 @@ class SpeechDatasetRAM(SpeechDatasetBase):
         }
 
 class SpeechDataModule(pl.LightningDataModule):
-    def __init__(self, params):
+    def __init__(self, params, timer=timer_data):
         super().__init__()
         self.params = params
+        self.timer = timer
         
         # this is for improving speed
         self.num_workers = self.params.get('num_workers', os.cpu_count())
@@ -150,7 +154,7 @@ class SpeechDataModule(pl.LightningDataModule):
             spec_path_train = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.train_dir)
             if self.params.val_dir is None:
                 # load train set - split train set into train and val
-                temp = self.data_class(audio_path_train, spec_path_train)
+                temp = self.data_class(audio_path_train, spec_path_train, self.timer)
                 len_val_set = int(floor(len(temp) * self.params.val_size))
                 temp.prepare_data(self.params)
                 self.train_set, self.val_set = random_split(temp, [len(temp)-len_val_set, len_val_set], generator=torch.Generator().manual_seed(42))
@@ -159,15 +163,15 @@ class SpeechDataModule(pl.LightningDataModule):
                 audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
                 spec_path_val = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.val_dir)
                 
-                self.val_set = self.data_class(audio_path_val, spec_path_val)
-                self.train_set = self.data_class(audio_path_train, spec_path_train)
+                self.val_set = self.data_class(audio_path_val, spec_path_val, self.timer)
+                self.train_set = self.data_class(audio_path_train, spec_path_train, self.timer)
                 self.val_set.prepare_data(self.params)
                 self.train_set.prepare_data(self.params)
             
         if stage == 'test':
             audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
             spec_path_test = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.test_dir)
-            self.test_set = self.data_class(audio_path_test, spec_path_test)
+            self.test_set = self.data_class(audio_path_test, spec_path_test, self.timer)
             self.test_set.prepare_data(self.params)
 
     

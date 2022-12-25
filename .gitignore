@@ -133,3 +133,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+
+
+checkpoints/**
+NST_dataset/dataset/train/**
+NST_dataset/dataset/test/**
+
+experiments/**
+spectrograms/**
