@@ -100,7 +100,10 @@ def main():
 
     timers = fit_model(model, params, experiment_name, global_seed, max_epochs, use_timing)
     
-    sum_timer = sum(timers)
+    sum_timer = timers[0]
+    for timer in timers[1:]:
+        sum_timer += timer
+
     sum_timer.evaluate(os.path.join("experiments", f"{experiment_name}_{global_seed}", "timer.csv"))
 
 if __name__ == '__main__':

@@ -86,8 +86,9 @@ class Timer:
     
     def __add__(self, other):
         assert isinstance(other, Timer), "Can only add timers together"
-        for task, time in other.data.items():
-            self.data[task] += time
+        for task, task_data in other.data.items():
+            for key, value in task_data.items():
+                self.data[task][key] += value
         self.total_running_time += other.total_running_time
         return self
 
