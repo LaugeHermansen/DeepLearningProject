@@ -10,8 +10,6 @@ from math import sqrt
 from glob import glob
 from tools import AttrDict, Timer
 
-timer_model = Timer()
-
 def Conv1d(*args, **kwargs):
     layer = nn.Conv1d(*args, **kwargs)
     nn.init.kaiming_normal_(layer.weight)
@@ -101,12 +99,12 @@ class ResidualBlock(nn.Module):
 
 
 class DiffWave(pl.LightningModule):
-    def __init__(self, params):
+    def __init__(self, params, use_timing=False):
         super().__init__()
-        
         # saveconda install -c conda-forge tensorflow hyperparams for load
         self.save_hyperparameters()
         self.params = params
+        self.use_timing(use_timing)
         
         self.diffusion_embedding = DiffusionEmbedding(len(params.noise_schedule))
         self.spectrogram_upsampler = SpectrogramUpsampler(params.n_mels)
@@ -127,6 +125,10 @@ class DiffWave(pl.LightningModule):
         noise_level = np.cumprod(1 - beta)
         self.noise_level = torch.tensor(noise_level.astype(np.float32))
         self.autocast = torch.cuda.amp.autocast(enabled=params.get('fp16', False))
+
+    def use_timing(self, use_timing):
+        self.timer.use_timing = use_timing
+        self.timer = Timer(use_timing)
 
     def forward(self, audio, diffusion_step, spectrogram):
         x = audio.unsqueeze(1)
@@ -154,7 +156,7 @@ class DiffWave(pl.LightningModule):
     def process_batch(self, batch):
         # for param in self.parameters():
         #     param.grad = None
-        timer_model("process batch")
+        self.timer("process batch")
 
         audio, spectrogram = batch['audio'], batch['spectrogram']
 
@@ -171,7 +173,7 @@ class DiffWave(pl.LightningModule):
 
             predicted = self(noisy_audio, t, spectrogram)
             loss = self.loss_fn(noise, predicted.squeeze(1))
-        timer_model()
+        self.timer()
         
         return loss
     

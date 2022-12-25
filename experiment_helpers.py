@@ -22,12 +22,12 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import CSVLogger
 
-from speech_datamodule import SpeechDataModule, timer_data
+from speech_datamodule import SpeechDataModule
+from diffwave_model import DiffWave
+
 
 from datetime import timedelta
 from tools import mkdir, Timer
-
-timer_experiment_helpers = Timer()
 
 #%%
 
@@ -92,17 +92,21 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     return trainer
 
 
-def fit_model(model, params, exp_name, global_seed, max_epochs):
+def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_timing=False):
 	
-
+    timer_experiment_helpers = Timer()
+    model.use_timing(True)
     pl.seed_everything(global_seed, workers=True)
     timer_experiment_helpers("preprocessing data")
-    data = SpeechDataModule(params=params)
+    data = SpeechDataModule(params=params, use_timing=use_timing)
     trainer = get_trainer(params, exp_name, global_seed, max_epochs)
     timer_experiment_helpers("fitting model")
     trainer.fit(model, data)
     timer_experiment_helpers()
     update_gitignore(params)
+
+    #return timers
+    return data.val_set.timer, data.test_set.timer, timer_experiment_helpers, model.timer
 
 
 

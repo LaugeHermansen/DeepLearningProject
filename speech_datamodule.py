@@ -14,11 +14,8 @@ from math import floor
 from glob import glob
 from tqdm import tqdm
 from tools import mkdir, Timer
-
-timer_data = Timer(False)
-
 class SpeechDatasetBase(Dataset):
-    def __init__(self, audio_dir, spec_dir):
+    def __init__(self, audio_dir, spec_dir, use_timing=False):
         super().__init__()
         self.audio_dir = audio_dir
         self.spec_dir = spec_dir
@@ -27,6 +24,8 @@ class SpeechDatasetBase(Dataset):
         self.spec_filenames = np.array([f'{f}.spec.npy' for f in self.audio_filenames])
         self.spec_file_paths = np.array([os.path.join(spec_dir, f) for f in self.spec_filenames])
         self.ignored_files = []
+        self.timer = Timer(use_timing)
+
         for f in self.spec_file_paths:
             mkdir(os.path.dirname(f))
 
@@ -106,13 +105,13 @@ class SpeechDatasetBase(Dataset):
         return len(self.audio_filenames)
     
     def _load_one_item(self, idx):
-        timer_data("_load_one_item()")
+        self.timer("_load_one_item()")
         audio_file_path = self.audio_file_paths[idx]
         spec_file_path = self.spec_file_paths[idx]
         signal, _ = torchaudio.load(audio_file_path)
         spectrogram = np.load(spec_file_path).T
         assert signal.shape[0] == 1, f"Only mono audio is supported, found {signal.shape}"
-        timer_data()
+        self.timer()
         return signal.squeeze(0), spectrogram
 
 class SpeechDatasetDisk(SpeechDatasetBase):
@@ -142,7 +141,7 @@ class SpeechDatasetRAM(SpeechDatasetBase):
         }
 
 class SpeechDataModule(pl.LightningDataModule):
-    def __init__(self, params):
+    def __init__(self, params, use_timing=False):
         super().__init__()
         self.params = params
         
