@@ -34,7 +34,7 @@ timer_experiment_helpers = Timer()
 
 def get_trainer(params, exp_name, global_seed, max_epochs):
 
-    save_dir = os.path.join(params.project_dir, 'experiments', f'{exp_name}_{global_seed}')
+    save_dir = os.path.join(params.project_dir_root, 'experiments', f'{exp_name}_{global_seed}')
     mkdir(save_dir)
 
     # save model every 1 hour
