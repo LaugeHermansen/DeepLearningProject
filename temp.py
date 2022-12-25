@@ -1,5 +1,5 @@
 #%%
-from eat_my_balls import SpeechDataModule, base_params, AttrDict
+from archive_2.eat_my_balls import SpeechDataModule, base_params, AttrDict
 from tools import mkdir
 import time
 from tqdm import tqdm

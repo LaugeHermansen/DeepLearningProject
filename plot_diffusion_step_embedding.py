@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import pytorch_lightning
-from eat_my_balls import DiffusionEmbedding
+from archive_2.eat_my_balls import DiffusionEmbedding
 from tools import get_cmap
 
 de = DiffusionEmbedding(50)

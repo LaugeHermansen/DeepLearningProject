@@ -1,3 +1,5 @@
+#%%
+
 from collections import defaultdict
 import pandas as pd
 from time import time_ns
@@ -8,6 +10,27 @@ from glob import glob as crappy_glob
 
 def glob(*args, **kwargs):
     return [x.replace("\\", "/") for x in crappy_glob(*args, **kwargs)]
+
+
+def mkdir(path):
+    if not os.path.exists(path): os.makedirs(path)
+    return path
+
+class AttrDict(dict):
+  def __init__(self, *args, **kwargs):
+      super(AttrDict, self).__init__(*args, **kwargs)
+      self.__dict__ = self
+
+  def override(self, attrs):
+    if isinstance(attrs, dict):
+      self.__dict__.update(**attrs)
+    elif isinstance(attrs, (list, tuple, set)):
+      for attr in attrs:
+        self.override(attr)
+    elif attrs is not None:
+      raise NotImplementedError
+    return self
+
 
 class Timer:
     def __init__(self, active=True):
@@ -73,19 +96,6 @@ class ScopeTimer:
     def __del__(self):
         self.timer.stop()
 
-def mkdir(path: str, strip=True):
-    path_ = path.strip("/")
-    idx = [i for i, c in enumerate(path_) if c == "/"] + [len(path_)]
-    add = 0
-    for i, pos in reversed(list(enumerate(idx))):
-        if os.path.exists(path_[:pos]):
-            add = int(os.path.exists(path_[:pos]))
-            break
-    for j in idx[i+add:]:
-        os.mkdir(path_[:j])
-    return path
-        
-
 def str_replaces(original_string: str, replace_tuples):
     for old, new in replace_tuples:
         original_string = original_string.replace(old, new)
@@ -101,12 +111,7 @@ def get_cmap(colors=None):
     # Create the colormap
     return LinearSegmentedColormap.from_list(cmap_name, colors, N=n_bin)
 
-
-
+#%%
 
 if __name__ == "__main__":
-    timer = Timer()
-    timer("hej")
-    timer.evaluate("timer1")
-    timer()
-    timer.evaluate("timer2")
+    print(os.path.basename(os.path.realpath("hej/hejjj")))

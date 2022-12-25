@@ -1054,7 +1054,7 @@ tensorrt/7.2.1.6-cuda-10.2
 tensorrt/7.2.1.6-cuda-11.0                                                                 
 tensorrt/7.2.1.6-cuda-11.1                                                                 
 tensorrt/7.2.3.4-cuda-10.2                                                                 
-tensorrt/7.2.3.4-cuda-11.0                                                                 
+tensorrt/7.2.3.4-cuda-11.0                                                                  
 tensorrt/7.2.3.4-cuda-11.1                                                                 
 tensorrt/7.2.3.4-cuda-11.2                                                                 
 tensorrt/7.2.3.4-cuda-11.X                                                                 
