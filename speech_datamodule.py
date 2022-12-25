@@ -34,6 +34,24 @@ class SpeechDatasetBase(Dataset):
     def __repr__(self):
         return f'{self.__class__.__name__}(dirs = {self.audio_dir}, {self.spec_dir}, {len(self)} items, {len(self.ignored_files)} ignored)'
 
+    def split(self, split_ratio=0.1):
+        def mask_set(set, mask):
+            set.audio_file_paths = self.audio_file_paths[mask]
+            set.audio_filenames = self.audio_filenames[mask]
+            set.spec_filenames = self.spec_filenames[mask]
+            set.spec_file_paths = self.spec_file_paths[mask]
+
+        n_split = floor(len(self) * split_ratio)
+        mask = np.random.permutation(len(self)) < n_split
+        set1 = self.__class__(self.audio_dir, self.spec_dir)
+        set2 = self.__class__(self.audio_dir, self.spec_dir)
+        mask_set(set1, mask)
+        mask_set(set2, ~mask)
+        return set1, set2
+
+        
+        
+
     def ignore_item(self, idx):
         self.ignored_files.append(self.audio_file_paths[idx])
         del self.audio_file_paths[idx]
@@ -154,10 +172,13 @@ class SpeechDataModule(pl.LightningDataModule):
             spec_path_train = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.train_dir)
             if self.params.val_dir is None:
                 # load train set - split train set into train and val
-                temp = self.data_class(audio_path_train, spec_path_train, self.timer)
-                len_val_set = int(floor(len(temp) * self.params.val_size))
-                temp.prepare_data(self.params)
-                self.train_set, self.val_set = random_split(temp, [len(temp)-len_val_set, len_val_set], generator=torch.Generator().manual_seed(42))
+                self.val_set, self.train_set = self.data_class(audio_path_train, spec_path_train).split(self.params.val_size)
+
+                # temp = self.data_class(audio_path_train, spec_path_train, self.timer)
+                # len_val_set = int(floor(len(temp) * self.params.val_size))
+                # temp.prepare_data(self.params)
+                # self.train_set, self.val_set = random_split(temp, [len(temp)-len_val_set, len_val_set], generator=torch.Generator().manual_seed(42))
+                
             else:
                 # load train and val set
                 audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
@@ -165,8 +186,9 @@ class SpeechDataModule(pl.LightningDataModule):
                 
                 self.val_set = self.data_class(audio_path_val, spec_path_val, self.timer)
                 self.train_set = self.data_class(audio_path_train, spec_path_train, self.timer)
-                self.val_set.prepare_data(self.params)
-                self.train_set.prepare_data(self.params)
+                
+            self.val_set.prepare_data(self.params)
+            self.train_set.prepare_data(self.params)
             
         if stage == 'test':
             audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
