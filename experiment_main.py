@@ -80,13 +80,13 @@ def main():
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
     # experiment name and seed
-    experiment_name = 'first_try'
+    experiment_name = 'from_bottom'
     global_seed = 42
 
     # costum parameters
     params.load_data_to_ram = False
     
-    max_epochs = 1
+    max_epochs = 100000
 
     # load the model somehow
     model = DiffWave(params)
