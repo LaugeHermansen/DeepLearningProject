@@ -80,7 +80,7 @@ def main():
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
     # experiment name and seed
-    experiment_name = 'from_bottom'
+    experiment_name = 'from_bottom_v2'
     global_seed = 42
 
     # costum parameters
@@ -89,7 +89,7 @@ def main():
     max_epochs = 100000
 
     # load the model somehow
-    model = DiffWave(params)
+    model = DiffWave(params, measure_grad_norm=True)
 
     # ----------------- don't change anything below this line ---------------
     #########################################################################

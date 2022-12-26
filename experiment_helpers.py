@@ -44,9 +44,7 @@ def update_gitignore(params):
             if not path in content:
                 g.write("\n" + path)
                 print(f'added to .gitignore: \"{path}\"')
-                    
-                
-   
+
 
 def get_trainer(params, exp_name, global_seed, max_epochs):
 
@@ -57,7 +55,8 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     checkpoint_callback_time = ModelCheckpoint(
         dirpath=save_dir,
         filename='time-{epoch}-{val_loss:.6f}',
-        train_time_interval=timedelta(hours=1)
+        train_time_interval=timedelta(hours=1),
+        save_top_k=-1,
         )
     
     # save k best end of epoch models

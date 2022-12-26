@@ -1,4 +1,5 @@
 
+#%%
 import numpy as np
 
 import torch
@@ -99,12 +100,13 @@ class ResidualBlock(nn.Module):
 
 
 class DiffWave(pl.LightningModule):
-    def __init__(self, params, use_timing=False):
+    def __init__(self, params, use_timing=False, measure_grad_norm=False):
         super().__init__()
         # saveconda install -c conda-forge tensorflow hyperparams for load
         self.save_hyperparameters()
         self.params = params
         self.use_timing(use_timing)
+        self.measure_grad_norm = measure_grad_norm
         
         self.diffusion_embedding = DiffusionEmbedding(len(params.noise_schedule))
         self.spectrogram_upsampler = SpectrogramUpsampler(params.n_mels)
@@ -179,6 +181,15 @@ class DiffWave(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss = self.process_batch(batch)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+        if self.measure_grad_norm:
+            grad_norm = 0.0
+            for p in list(filter(lambda p: p.grad is not None, self.parameters())):
+                grad_norm += torch.linalg.norm(p.grad.data).detach()**2
+        
+            self.log('grad_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+
         return loss
     
     def validation_step(self, batch, batch_idx):
@@ -244,10 +255,4 @@ class DiffWave(pl.LightningModule):
                 audio = torch.clamp(audio, -1.0, 1.0)
                 
         return audio
-
-
-
-
-
-
 
