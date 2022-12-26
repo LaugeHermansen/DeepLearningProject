@@ -37,7 +37,7 @@ def update_gitignore(params):
         content = g.read().split("\n")
     with open(".gitignore", "a") as g:
         root = params.project_dir_root
-        names = [params[name] for name in ["checkpoint_dir", "train_dir", "test_dir", "val_dir"] if not (params[name] is None)]
+        names = [params[name] for name in ["train_dir", "test_dir", "val_dir"] if not (params[name] is None)]
         names += ["experiments", "spectrograms"]
         for name in names:
             path = os.path.join(root, name).replace("\\", "/") + "/**"
@@ -55,7 +55,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     checkpoint_callback_time = ModelCheckpoint(
         dirpath=save_dir,
         filename='time-{epoch}-{val_loss:.6f}',
-        train_time_interval=timedelta(minutes=1),
+        train_time_interval=timedelta(hours=1),
         # train_time_interval=timedelta(hours=1),
         save_top_k=-1,
         )
@@ -81,7 +81,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback_time],# checkpoint_callback_top_k], # runs at the end of every train loop
+        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k], # runs at the end of every train loop
         log_every_n_steps=10,
         max_epochs=max_epochs,
         accelerator=params.accelerator,

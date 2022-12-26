@@ -54,7 +54,6 @@ base_params = dict(
     data_dir_root = '/dtu/blackhole/11/155505', # the root dir of the data files
     project_dir_root = '', # the root dir of the project files
 
-    checkpoint_dir = 'checkpoints', # relative to project_dir_root
     train_dir = 'NST_dataset/dataset/train', #relative to data_dir
     test_dir = 'NST_dataset/dataset/test',  #relative to data_dir
     val_dir = None, #relative to data_dir
