@@ -1,9 +1,9 @@
-# create infinite loop updating git repo every 30 seconds
+#!/bin/bash
 
 while true; do
-    git add .
-    git commit -m "auto commit"
-    git pull
-    git push
-    sleep 30
+  git add .
+  git commit -m "Automatic commit"
+  git pull
+  git push
+  sleep 120
 done

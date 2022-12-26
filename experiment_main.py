@@ -85,7 +85,7 @@ def main():
     # costum parameters
     params.load_data_to_ram = False
     
-    max_epochs = 1
+    max_epochs = 100
 
     # load the model somehow
     model = DiffWave(params, measure_grad_norm=True)
