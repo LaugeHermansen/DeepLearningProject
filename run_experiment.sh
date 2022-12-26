@@ -5,8 +5,8 @@
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 8
 #BSUB -R "span[hosts=1]" 
-#BSUB -o experiment.out
-#BSUB -e experiment.err
+#BSUB -o experiment_%J.out
+#BSUB -e experiment_%J.err
 #BSUB -W 24:00
 # -- end of LSF options --
 
