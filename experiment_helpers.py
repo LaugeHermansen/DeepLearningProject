@@ -55,7 +55,8 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     checkpoint_callback_time = ModelCheckpoint(
         dirpath=save_dir,
         filename='time-{epoch}-{val_loss:.6f}',
-        train_time_interval=timedelta(hours=1),
+        train_time_interval=timedelta(minutes=1),
+        # train_time_interval=timedelta(hours=1),
         save_top_k=-1,
         )
     
@@ -80,7 +81,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k], # runs at the end of every train loop
+        callbacks=[checkpoint_callback_time],# checkpoint_callback_top_k], # runs at the end of every train loop
         log_every_n_steps=10,
         max_epochs=max_epochs,
         accelerator=params.accelerator,
