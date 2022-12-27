@@ -7,14 +7,14 @@ import os
 
 
 
-data = pd.read_csv("experiments/from_bottom_v5_42/log/version_0/metrics.csv")
+data = pd.read_csv("experiments/from_bottom_v7_42/log/version_0/metrics.csv")
 
 
 #%%
 
-grad_norm_step = data["grad_norm_step"].dropna().values
+grad_norm_step = data["grad_2_norm_step"].dropna().values
 train_loss_step = data["train_loss_step"].dropna().values
-start = 100
+start = 50
 fig, axs = plt.subplots(2,2)
 axs[0,0].plot(grad_norm_step[start:], alpha=0.2, markersize=2, marker='o', linestyle='None', label='grad_norm_step')
 axs[0,0].plot(np.convolve(grad_norm_step[start:], np.ones(100)/100, mode='valid'), label='grad_norm_step (smoothed)')
@@ -30,6 +30,7 @@ axs[1,1].set_title('histogram of grad_norm_step')
 
 
 plt.show()
+print(len(grad_norm_step))
 
 
 

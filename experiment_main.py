@@ -65,6 +65,7 @@ base_params = dict(
     load_data_to_ram = False,
     accelerator = 'gpu',
     gradient_clip_val = 0,
+    checkpoint_name = None,
 )
 
 
@@ -82,11 +83,12 @@ def main():
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
 
-    experiment_name = 'from_bottom_v7'
+    experiment_name = 'from_bottom_v3'
     global_seed = 42
     max_epochs = 100000
     
     params.gradient_clip_val = 10.
+    params.checkpoint_name = "time-epoch=183-val_loss=0.041604.ckpt"
 
     # load the model somehow
     model = DiffWave(params, measure_grad_norm=True)

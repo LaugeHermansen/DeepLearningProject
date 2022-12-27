@@ -34,12 +34,15 @@ from tools import mkdir, Timer
 class StoreGradNormCallback(pl.Callback):
 
     def on_before_optimizer_step(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", optimizer, opt_idx: int):
-        if pl_module.measure_grad_norm:
-            grad_norm = 0.0
-            for p in list(filter(lambda p: p.grad is not None, pl_module.parameters())):
-                grad_norm += torch.linalg.norm(p.grad.data).detach()**2
         
-            pl_module.log('grad_2_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+        def compute_grad_norm(model):
+            if model.measure_grad_norm:
+                grad_norm = 0.0
+                for p in list(filter(lambda p: p.grad is not None, model.parameters())):
+                    grad_norm += torch.linalg.norm(p.grad.data).detach()**2
+            return grad_norm**0.5
+
+        pl_module.log('grad_2_norm', compute_grad_norm(pl_module), on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
 
 def update_gitignore(params):
@@ -69,8 +72,9 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     checkpoint_callback_time = ModelCheckpoint(
         dirpath=save_dir,
         filename='time-{epoch}-{val_loss:.6f}',
-        train_time_interval=timedelta(hours=1),
         # train_time_interval=timedelta(hours=1),
+        # train_time_interval=timedelta(hours=1),
+        every_n_epochs=15,
         save_top_k=-1,
         )
     
@@ -103,6 +107,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
         logger=logger,
         gradient_clip_val=params.gradient_clip_val,
         # track_grad_norm=2,
+        ckpt_path=params.checkpoint_path,
     )
 
     return trainer
