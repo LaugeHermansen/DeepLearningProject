@@ -26,6 +26,7 @@ from experiment_helpers import fit_model
 
 import shutil
 import __main__
+import glob
 
 from params import params
 
