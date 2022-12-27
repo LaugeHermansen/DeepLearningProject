@@ -125,21 +125,22 @@ class SpeechDatasetDisk(SpeechDatasetBase):
         }
 
 class SpeechDatasetRAM(SpeechDatasetBase):
-
-    def __init__(self, audio_dir, spec_dir):
-        super().__init__(audio_dir, spec_dir)
-        self.audio = []
-        self.spectrogram = []
-        for idx in tqdm(range(len(self)), desc="Loading audio and spectrogram into RAM"):
-            signal, spectrogram = self._load_one_item(idx)
-            self.audio.append(signal)
-            self.spectrogram.append(spectrogram)
     
     def __getitem__(self, idx):
         return {
             'audio': self.audio[idx],
             'spectrogram': self.spectrogram[idx]
         }
+    
+    def prepare_data(self, params):
+        super().prepare_data(params)
+        self.audio = []
+        self.spectrogram = []
+        for idx in tqdm(range(len(self)), desc=f"Loading audio and spectrogram into RAM, from {self.audio_dir}"):
+            signal, spectrogram = self._load_one_item(idx)
+            self.audio.append(signal)
+            self.spectrogram.append(spectrogram)
+        
 
 class SpeechDataModule(pl.LightningDataModule):
     def __init__(self, params, use_timing=False):
