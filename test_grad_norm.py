@@ -7,13 +7,22 @@ import os
 
 
 
-data = pd.read_csv("experiments/from_bottom_v3_42/log/version_1/metrics.csv")
+data1 = pd.read_csv("experiments/from_bottom_v3_42/log/version_1/metrics.csv")
+data2 = pd.read_csv("experiments/from_bottom_v3_42/log/version_2/metrics.csv")
 
 
 #%%
 
-grad_norm_step = data["grad_2_norm_step"].dropna().values
-train_loss_step = data["train_loss_step"].dropna().values
+grad_norm_step1 = data1["grad_2_norm_step"].dropna().values
+train_loss_step1 = data1["train_loss_step"].dropna().values
+grad_norm_step2 = data2["grad_2_norm_step"].dropna().values
+train_loss_step2 = data2["train_loss_step"].dropna().values
+
+grad_norm_step = np.concatenate((grad_norm_step1, grad_norm_step2))
+train_loss_step = np.concatenate((train_loss_step1, train_loss_step2))
+
+
+
 start = 0
 conv_width = 50
 assert start < len(grad_norm_step) and start < len(train_loss_step), "start index is too large"

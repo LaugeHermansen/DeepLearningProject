@@ -41,7 +41,7 @@ def main():
     max_epochs = 100000
     
     params.gradient_clip_val = 100.
-    params.checkpoint_name = "k-epoch=250-val_loss=0.041077.ckpt"
+    # params.checkpoint_name = "k-epoch=250-val_loss=0.041077.ckpt"
     params.load_data_to_ram = True
 
     # load the model somehow
