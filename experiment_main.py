@@ -82,25 +82,24 @@ def main():
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
 
-    experiment_name = 'from_bottom_v5'
+    experiment_name = 'from_bottom_v6'
     global_seed = 42
     max_epochs = 100000
     
     params.gradient_clip_val = 10.
 
     # load the model somehow
-    model = DiffWave(params)
+    model = DiffWave(params, measure_grad_norm=True)
 
     # ----------------- don't change anything below this line ---------------
     #########################################################################
-
-    fit_model(model, params, experiment_name, global_seed, max_epochs)
 
     save_dir = os.path.join(params.project_dir_root, 'experiments', f'{experiment_name}_{global_seed}')
     mkdir(save_dir)
 
     shutil.copy(__main__.__file__, os.path.join(save_dir, os.path.basename(__main__.__file__)))
     
+    fit_model(model, params, experiment_name, global_seed, max_epochs)
     
 
 if __name__ == '__main__':
