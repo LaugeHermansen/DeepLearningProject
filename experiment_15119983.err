@@ -34,3 +34,5 @@ LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
 0         Non-trainable params
 2.6 M     Total params
 10.480    Total estimated model params size (MB)
+/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py:48: UserWarning: Detected KeyboardInterrupt, attempting graceful shutdown...
+  rank_zero_warn("Detected KeyboardInterrupt, attempting graceful shutdown...")
