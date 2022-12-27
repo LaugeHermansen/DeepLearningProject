@@ -38,7 +38,7 @@ def update_gitignore(params):
     with open(".gitignore", "a") as g:
         root = params.project_dir_root
         names = [params[name] for name in ["train_dir", "test_dir", "val_dir"] if not (params[name] is None)]
-        names += ["experiments", "spectrograms"]
+        names += ["spectrograms"]
         for name in names:
             path = os.path.join(root, name).replace("\\", "/") + "/**"
             if not path in content:
