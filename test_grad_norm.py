@@ -15,7 +15,7 @@ data = pd.read_csv("experiments/from_bottom_v3_42/log/version_1/metrics.csv")
 grad_norm_step = data["grad_2_norm_step"].dropna().values
 train_loss_step = data["train_loss_step"].dropna().values
 start = 0
-conv_width = 100
+conv_width = 50
 assert start < len(grad_norm_step) and start < len(train_loss_step), "start index is too large"
 fig, axs = plt.subplots(2,2)
 axs[0,0].plot(grad_norm_step[start:], ',', label='grad_norm_step')
