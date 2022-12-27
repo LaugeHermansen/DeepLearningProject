@@ -7,7 +7,10 @@ import os
 
 
 
-data = pd.read_csv("experiments/from_bottom_v3_42/log/version_0/metrics.csv")
+data = pd.read_csv("experiments/from_bottom_v4_42/log/version_0/metrics.csv")
+
+
+#%%
 
 grad_norm_step = data["grad_norm_step"].dropna().values
 train_loss_step = data["train_loss_step"].dropna().values
