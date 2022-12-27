@@ -31,6 +31,17 @@ from tools import mkdir, Timer
 
 #%%
 
+class StoreGradNormCallback(pl.Callback):
+    def on_after_backward(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+        if pl_module.measure_grad_norm:
+            grad_norm = 0.0
+            for p in list(filter(lambda p: p.grad is not None, pl_module.parameters())):
+                grad_norm += torch.linalg.norm(p.grad.data).detach()**2
+        
+            pl_module.log('grad_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+
+
 def update_gitignore(params):
     
     with open(".gitignore", "r") as g:
@@ -50,6 +61,9 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 
     save_dir = os.path.join(params.project_dir_root, 'experiments', f'{exp_name}_{global_seed}')
     mkdir(save_dir)
+
+    # store grad norm
+    store_grad_norm_callback = StoreGradNormCallback()
 
     # save model every 1 hour
     checkpoint_callback_time = ModelCheckpoint(
@@ -81,13 +95,14 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
 
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k], # runs at the end of every train loop
+        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback], # runs at the end of every train loop
         log_every_n_steps=10,
         max_epochs=max_epochs,
         accelerator=params.accelerator,
         # devices=1,
         logger=logger,
-        gradient_clip_val=params.gradient_clip_val
+        gradient_clip_val=params.gradient_clip_val,
+        track_grad_norm=2,
     )
 
     return trainer

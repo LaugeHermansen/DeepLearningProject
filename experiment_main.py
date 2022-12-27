@@ -84,7 +84,7 @@ def main():
     global_seed = 42
     max_epochs = 100000
     
-    params.gradient_clip_val = 10
+    params.gradient_clip_val = 10.
 
     # load the model somehow
     model = DiffWave(params)
