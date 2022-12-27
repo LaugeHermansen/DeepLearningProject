@@ -122,6 +122,7 @@ def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_ti
     timer_experiment_helpers()
     trainer, save_dir = get_trainer(params, exp_name, global_seed, max_epochs)
     timer_experiment_helpers("fitting model")
+    ckpt_path = os.path.join(save_dir, params.checkpoint_name) if params.checkpoint_name else None
     trainer.fit(model, data, ckpt_path=os.path.join(save_dir, params.checkpoint_name),)
     timer_experiment_helpers()
     update_gitignore(params)
