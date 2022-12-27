@@ -82,7 +82,7 @@ def main():
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
 
-    experiment_name = 'from_bottom_v6'
+    experiment_name = 'from_bottom_v7'
     global_seed = 42
     max_epochs = 100000
     

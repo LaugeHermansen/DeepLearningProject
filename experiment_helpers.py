@@ -32,14 +32,14 @@ from tools import mkdir, Timer
 #%%
 
 class StoreGradNormCallback(pl.Callback):
-    def on_after_backward(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule") -> None:
+
+    def on_before_optimizer_step(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule", optimizer, opt_idx: int):
         if pl_module.measure_grad_norm:
             grad_norm = 0.0
             for p in list(filter(lambda p: p.grad is not None, pl_module.parameters())):
                 grad_norm += torch.linalg.norm(p.grad.data).detach()**2
         
-            pl_module.log('grad_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-
+            pl_module.log('my_grad_2_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
 
 def update_gitignore(params):
