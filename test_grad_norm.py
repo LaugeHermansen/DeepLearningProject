@@ -7,7 +7,7 @@ import os
 
 
 
-data = pd.read_csv("experiments/from_bottom_v4_42/log/version_0/metrics.csv")
+data = pd.read_csv("experiments/from_bottom_v5_42/log/version_0/metrics.csv")
 
 
 #%%
