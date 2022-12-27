@@ -9,7 +9,8 @@ import os
 experiments = [
     # ("from_bottom_v3_42", "version_1"),
     # ("from_bottom_v3_42", "version_2"),
-    ("from_bottom_v8_42", "version_0"),
+    # ("from_bottom_v8_42", "version_0"),
+    ("from_bottom_RAM_42", "version_0"),
     ]
 
 metrics_paths = [os.path.join("experiments", exp[0], "log", exp[1], "metrics.csv") for exp in experiments]

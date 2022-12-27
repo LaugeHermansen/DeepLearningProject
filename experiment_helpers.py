@@ -123,6 +123,10 @@ def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_ti
     trainer, save_dir = get_trainer(params, exp_name, global_seed, max_epochs)
     timer_experiment_helpers("fitting model")
     ckpt_path = os.path.join(save_dir, params.checkpoint_name) if params.checkpoint_name is not None else None
+    if ckpt_path is not None:
+        assert os.path.exists(ckpt_path), f"checkpoint path {ckpt_path} does not exist"
+        print(f"loading checkpoint from {ckpt_path}")
+        # model.load_from_checkpoint(ckpt_path)
     trainer.fit(model, data, ckpt_path=ckpt_path,)
     timer_experiment_helpers()
     update_gitignore(params)
