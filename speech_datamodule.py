@@ -14,6 +14,7 @@ from math import floor
 from glob import glob
 from tqdm import tqdm
 from tools import mkdir, Timer
+
 class SpeechDatasetBase(Dataset):
     def __init__(self, audio_dir, spec_dir, use_timing=False):
         super().__init__()
