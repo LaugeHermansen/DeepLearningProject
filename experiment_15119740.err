@@ -32,3 +32,66 @@ LOCAL_RANK: 0 - CUDA_VISIBLE_DEVICES: [0]
 0         Non-trainable params
 2.6 M     Total params
 10.480    Total estimated model params size (MB)
+Traceback (most recent call last):
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 38, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 645, in _fit_impl
+    self._run(model, ckpt_path=self.ckpt_path)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1098, in _run
+    results = self._run_stage()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1177, in _run_stage
+    self._run_train()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 1200, in _run_train
+    self.fit_loop.run()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loops/loop.py", line 199, in run
+    self.advance(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loops/fit_loop.py", line 267, in advance
+    self._outputs = self.epoch_loop.run(self._data_fetcher)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loops/loop.py", line 199, in run
+    self.advance(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loops/epoch/training_epoch_loop.py", line 242, in advance
+    self.trainer._logger_connector.update_train_step_metrics()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/logger_connector.py", line 144, in update_train_step_metrics
+    self.log_metrics(self.metrics["log"])
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/connectors/logger_connector/logger_connector.py", line 95, in log_metrics
+    logger.log_metrics(metrics=scalar_metrics, step=step)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/lightning_utilities/core/rank_zero.py", line 24, in wrapped_fn
+    return fn(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loggers/csv_logs.py", line 202, in log_metrics
+    self.save()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/lightning_utilities/core/rank_zero.py", line 24, in wrapped_fn
+    return fn(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loggers/csv_logs.py", line 207, in save
+    self.experiment.save()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loggers/csv_logs.py", line 87, in save
+    save_hparams_to_yaml(hparams_file, self.hparams)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/core/saving.py", line 379, in save_hparams_to_yaml
+    raise RuntimeError(f"Missing folder: {os.path.dirname(config_yaml)}.")
+RuntimeError: Missing folder: experiments/from_bottom_v4_42/log/version_0.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/experiment_main.py", line 99, in <module>
+    save_dir = os.path.join(params.project_dir_root, 'experiments', f'{exp_name}_{global_seed}')
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/experiment_main.py", line 96, in main
+    
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/experiment_helpers.py", line 105, in fit_model
+    track_grad_norm=2,
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/trainer.py", line 603, in fit
+    call._call_and_handle_interrupt(
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/trainer/call.py", line 62, in _call_and_handle_interrupt
+    logger.finalize("failed")
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/lightning_utilities/core/rank_zero.py", line 24, in wrapped_fn
+    return fn(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loggers/csv_logs.py", line 215, in finalize
+    self.save()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/lightning_utilities/core/rank_zero.py", line 24, in wrapped_fn
+    return fn(*args, **kwargs)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loggers/csv_logs.py", line 207, in save
+    self.experiment.save()
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/loggers/csv_logs.py", line 87, in save
+    save_hparams_to_yaml(hparams_file, self.hparams)
+  File "/zhome/56/e/155505/Desktop/DeepLearningProject/diffwave/lib/python3.10/site-packages/pytorch_lightning/core/saving.py", line 379, in save_hparams_to_yaml
+    raise RuntimeError(f"Missing folder: {os.path.dirname(config_yaml)}.")
+RuntimeError: Missing folder: experiments/from_bottom_v4_42/log/version_0.
