@@ -87,7 +87,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
         accelerator=params.accelerator,
         # devices=1,
         logger=logger,
-        gradient_clip_val=28.0
+        gradient_clip_val=params.gradient_clip_val
     )
 
     return trainer
