@@ -107,10 +107,9 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
         logger=logger,
         gradient_clip_val=params.gradient_clip_val,
         # track_grad_norm=2,
-        ckpt_path=os.path.join(save_dir, params.checkpoint_name),
     )
 
-    return trainer
+    return trainer, save_dir
 
 
 def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_timing=False):
@@ -121,9 +120,9 @@ def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_ti
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params, use_timing=use_timing)
     timer_experiment_helpers()
-    trainer = get_trainer(params, exp_name, global_seed, max_epochs)
+    trainer, save_dir = get_trainer(params, exp_name, global_seed, max_epochs)
     timer_experiment_helpers("fitting model")
-    trainer.fit(model, data)
+    trainer.fit(model, data, ckpt_path=os.path.join(save_dir, params.checkpoint_name),)
     timer_experiment_helpers()
     update_gitignore(params)
 
