@@ -25,7 +25,7 @@ from diffwave_model import DiffWave
 from experiment_helpers import fit_model
 
 import shutil
-import main
+import __main__
 
 base_params = dict(
     # Training params
@@ -96,10 +96,10 @@ def main():
 
     fit_model(model, params, experiment_name, global_seed, max_epochs)
 
-	save_dir = os.path.join(params.project_dir_root, 'experiments', f'{exp_name}_{global_seed}')
+    save_dir = os.path.join(params.project_dir_root, 'experiments', f'{experiment_name}_{global_seed}')
     mkdir(save_dir)
-    
-    shutil.copy(__main__.__file__, os.path.join(save_dir, os.path.basename(__main__.__file__))
+
+    shutil.copy(__main__.__file__, os.path.join(save_dir, os.path.basename(__main__.__file__)))
     
     
 
