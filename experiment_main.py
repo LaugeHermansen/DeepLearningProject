@@ -52,12 +52,24 @@ def main():
 
     save_dir = os.path.join(params.project_dir_root, 'experiments', f'{experiment_name}_{global_seed}')
     mkdir(save_dir)
-
-    shutil.copy(__main__.__file__, os.path.join(save_dir, os.path.basename(__main__.__file__)))
+    exp_script_dir = os.path.join(save_dir, 'experiment_scripts')
+    mkdir(exp_script_dir)
     
+    # save the experiment script
+    script_names = glob(os.path.join(exp_script_dir, 'run_script_version*.py'))
+    versions = [int(name.split('run_script_version')[-1].split('.')[0]) for name in script_names]
+    if len(versions) == 0:
+        version = 0
+    else:
+        version = max(versions) + 1
+    shutil.copy(__main__.__file__, os.path.join(exp_script_dir, f'run_script_version{version}.py'))
+
     fit_model(model, params, experiment_name, global_seed, max_epochs)
     
 
+#%%
+
 if __name__ == '__main__':
     main()
+
 

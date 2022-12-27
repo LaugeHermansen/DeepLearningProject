@@ -6,24 +6,25 @@ import matplotlib.pyplot as plt
 import os
 
 
+experiments = [
+    # ("from_bottom_v3_42", "version_1"),
+    # ("from_bottom_v3_42", "version_2"),
+    ("from_bottom_v8_42", "version_0"),
+    ]
 
-data1 = pd.read_csv("experiments/from_bottom_v3_42/log/version_1/metrics.csv")
-data2 = pd.read_csv("experiments/from_bottom_v3_42/log/version_2/metrics.csv")
+metrics_paths = [os.path.join("experiments", exp[0], "log", exp[1], "metrics.csv") for exp in experiments]
 
+data = [pd.read_csv(path) for path in metrics_paths]
 
 #%%
 
-grad_norm_step1 = data1["grad_2_norm_step"].dropna().values
-train_loss_step1 = data1["train_loss_step"].dropna().values
-grad_norm_step2 = data2["grad_2_norm_step"].dropna().values
-train_loss_step2 = data2["train_loss_step"].dropna().values
-
-grad_norm_step = np.concatenate((grad_norm_step1, grad_norm_step2))
-train_loss_step = np.concatenate((train_loss_step1, train_loss_step2))
 
 
+grad_norm_step = np.concatenate([d['grad_2_norm_step'].dropna().to_numpy() for d in data])
+train_loss_step = np.concatenate([d['train_loss_step'].dropna().to_numpy() for d in data])
+val_loss_epoch = np.concatenate([d['val_loss_epoch'].dropna().to_numpy() for d in data])
 
-start = 0
+start = 10
 conv_width = 50
 assert start < len(grad_norm_step) and start < len(train_loss_step), "start index is too large"
 fig, axs = plt.subplots(2,2)
@@ -39,8 +40,15 @@ if len(train_loss_step) > conv_width:
 
 axs[0,1].set_title('train_loss_step')
 # axs[0,1].legend()
-axs[1,1].hist(grad_norm_step[start:], bins=100, label='histogram of grad_norm_step')
-axs[1,1].set_title('histogram of grad_norm_step')
+axs[1,0].hist(grad_norm_step[start:], bins=100, label='histogram of grad_norm_step')
+axs[1,0].set_title('histogram of grad_norm_step')
+
+axs[1,1].plot(val_loss_epoch, label='val_loss_epoch')
+if len(val_loss_epoch) > conv_width:
+    axs[1,1].plot(np.convolve(val_loss_epoch, np.ones(conv_width)/conv_width, mode='valid'), label='val_loss_epoch (smoothed)')
+axs[1,1].set_title('val_loss_epoch')
+# axs[1,1].legend()
+
 
 
 plt.show()
