@@ -110,4 +110,6 @@ def get_cmap(colors=None):
 #%%
 
 if __name__ == "__main__":
-    print(os.path.basename(os.path.realpath("hej/hejjj")))
+    # print(os.path.basename(os.path.realpath("hej/hejjj")))
+    import __main__ 
+    print(os.path.basename(__main__.__file__))
