@@ -48,8 +48,6 @@ class SpeechDatasetBase(Dataset):
         mask_set(set2, ~mask)
         return set1, set2
 
-        
-        
 
     def ignore_item(self, idx):
         self.ignored_files.append(self.audio_file_paths[idx])
