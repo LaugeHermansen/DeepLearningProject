@@ -104,5 +104,5 @@ def main():
     
 
 if __name__ == '__main__':
-    import import_main_test_ 
-    
+    main()
+
