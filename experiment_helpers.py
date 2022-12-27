@@ -115,6 +115,7 @@ def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_ti
     pl.seed_everything(global_seed, workers=True)
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params, use_timing=use_timing)
+    timer_experiment_helpers()
     trainer = get_trainer(params, exp_name, global_seed, max_epochs)
     timer_experiment_helpers("fitting model")
     trainer.fit(model, data)
