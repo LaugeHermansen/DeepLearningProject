@@ -107,7 +107,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
         logger=logger,
         gradient_clip_val=params.gradient_clip_val,
         # track_grad_norm=2,
-        ckpt_path=params.checkpoint_path,
+        ckpt_path=os.path.join(save_dir, params.checkpoint_name),
     )
 
     return trainer
