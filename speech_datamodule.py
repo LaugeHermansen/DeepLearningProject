@@ -130,7 +130,7 @@ class SpeechDatasetRAM(SpeechDatasetBase):
         super().__init__(audio_dir, spec_dir)
         self.audio = []
         self.spectrogram = []
-        for idx in range(tqdm(len(self), desc="Loading audio and spectrogram into RAM")):
+        for idx in tqdm(range(len(self)), desc="Loading audio and spectrogram into RAM"):
             signal, spectrogram = self._load_one_item(idx)
             self.audio.append(signal)
             self.spectrogram.append(spectrogram)
