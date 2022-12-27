@@ -61,7 +61,8 @@ base_params = dict(
     num_workers = 4,
     fp16 = True,
     load_data_to_ram = False,
-    accelerator = 'gpu'
+    accelerator = 'gpu',
+    gradient_clip_val = 0,
 )
 
 
@@ -78,17 +79,15 @@ def main():
 
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
-    # experiment name and seed
-    experiment_name = 'from_bottom_v3'
-    global_seed = 42
 
-    # costum parameters
-    params.load_data_to_ram = False
-    
+    experiment_name = 'from_bottom_v4'
+    global_seed = 42
     max_epochs = 100000
+    
+    params.gradient_clip_val = 10
 
     # load the model somehow
-    model = DiffWave(params, measure_grad_norm=True)
+    model = DiffWave(params)
 
     # ----------------- don't change anything below this line ---------------
     #########################################################################

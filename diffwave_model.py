@@ -182,13 +182,12 @@ class DiffWave(pl.LightningModule):
         loss = self.process_batch(batch)
         self.log('train_loss', loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-        if self.measure_grad_norm:
-            grad_norm = 0.0
-            for p in list(filter(lambda p: p.grad is not None, self.parameters())):
-                grad_norm += torch.linalg.norm(p.grad.data).detach()**2
-        
-            self.log('grad_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
-
+        # if self.measure_grad_norm:
+        #     grad_norm = 0.0
+        #     for p in list(filter(lambda p: p.grad is not None, self.parameters())):
+        #         grad_norm += torch.linalg.norm(p.grad.data).detach()**2
+        #  
+        #     self.log('grad_norm', grad_norm**0.5, on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
         return loss
     
