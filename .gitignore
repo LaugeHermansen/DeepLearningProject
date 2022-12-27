@@ -138,4 +138,3 @@ dmypy.json
 
 NST_dataset/dataset/train/**
 NST_dataset/dataset/test/**
-experiments/**
