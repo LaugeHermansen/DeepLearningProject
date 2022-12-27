@@ -24,6 +24,8 @@ from tools import AttrDict, mkdir, Timer
 from diffwave_model import DiffWave
 from experiment_helpers import fit_model
 
+import shutil
+import main
 
 base_params = dict(
     # Training params
@@ -80,7 +82,7 @@ def main():
     #########################################################################
     # -------------- specify the options for the eperiment ------------------
 
-    experiment_name = 'from_bottom_v4'
+    experiment_name = 'from_bottom_v5'
     global_seed = 42
     max_epochs = 100000
     
@@ -92,8 +94,14 @@ def main():
     # ----------------- don't change anything below this line ---------------
     #########################################################################
 
-
     fit_model(model, params, experiment_name, global_seed, max_epochs)
+
+	save_dir = os.path.join(params.project_dir_root, 'experiments', f'{exp_name}_{global_seed}')
+    mkdir(save_dir)
+    
+    shutil.copy(__main__.__file__, os.path.join(save_dir, os.path.basename(__main__.__file__))
+    
+    
 
 if __name__ == '__main__':
     main()
