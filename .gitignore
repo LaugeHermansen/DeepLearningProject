@@ -4,6 +4,7 @@
 spectrograms/**
 
 *.out
+*.err
 *.ckpt
 
 # Byte-compiled / optimized / DLL files
