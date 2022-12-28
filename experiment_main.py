@@ -43,7 +43,7 @@ def main():
     
     params.gradient_clip_val = 100.
     params.checkpoint_name = "time-epoch=239-val_loss=0.042926.ckpt"
-    params.load_data_to_ram = True
+    # params.load_data_to_ram = True
 
     # load the model somehow
     model = DiffWave(params, measure_grad_norm=True)
