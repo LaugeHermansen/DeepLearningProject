@@ -17,64 +17,61 @@ experiments = [
 versions = {}
 for exp in experiments:
     if exp[0] not in versions:
-        versions[exp[0]] = []
-    versions[exp[0]].append(exp[1].split("_")[-1])
+        versions[exp[0]] = [exp[1].split("_")[-1]]
+    else:
+        versions[exp[0]].append(exp[1].split("_")[-1])
+        assert int(versions[exp[0]][-2]) < int(versions[exp[0]][-1]), "versions are not in order"
 
 title = ", ".join([f"{exp}: {','.join(versions[exp])}" for exp in versions])
 
 
 metrics_paths = [os.path.join("experiments", exp[0], "log", exp[1], "metrics.csv") for exp in experiments]
 
-data = [pd.read_csv(path) for path in metrics_paths]
-
-#%%
+data = pd.concat([pd.read_csv(path) for path in metrics_paths])
 
 
-
-grad_norm_step = np.concatenate([d['grad_2_norm_step'].dropna().to_numpy() for d in data])
-train_loss_step = np.concatenate([d['train_loss_step'].dropna().to_numpy() for d in data])
-val_loss_epoch = np.concatenate([d['val_loss_epoch'].dropna().to_numpy() for d in data if "val_loss_epoch" in d.columns])
+start_step = 0
+start_epoch = 0
 
 
-start = 0
-conv_width = 50
-assert start < len(grad_norm_step) and start < len(train_loss_step), "start index is too large"
-
-fig, axs = plt.subplots(2,2)
-# plot the gradient norm
-axs[0,0].plot(grad_norm_step[start:], ',', label='grad_norm_step')
-
-if len(grad_norm_step) > conv_width:
-    axs[0,0].plot(np.convolve(grad_norm_step[start:], np.ones(conv_width)/conv_width, mode='valid'), label='grad_norm_step (smoothed)')
-axs[0,0].set_title('grad_norm_step')
-# axs[0,0].legend()
-
-# plot the train loss step
-axs[0,1].plot(train_loss_step[start:], ',',label='train_loss_step')
-if len(train_loss_step) > conv_width:
-    axs[0,1].plot(np.convolve(train_loss_step[start:], np.ones(conv_width)/conv_width, mode='valid'), label='train_loss_step (smoothed)')
-
-axs[0,1].set_ylim(0, 0.15)
-axs[0,1].set_title('train_loss_step')
-# axs[0,1].legend()
-
-# plot the histogram of the gradient norm
-axs[1,0].hist(grad_norm_step[start:], bins=100, label='histogram of grad_norm_step')
-axs[1,0].set_title('histogram of grad_norm_step')
+fig = plt.figure(figsize=(10,5))
 
 
-# plot the validation loss epoch
-axs[1,1].plot(val_loss_epoch, label='val_loss_epoch')
-if len(val_loss_epoch) > conv_width:
-    axs[1,1].plot(np.convolve(val_loss_epoch, np.ones(conv_width)/conv_width, mode='valid'), label='val_loss_epoch (smoothed)')
-axs[1,1].set_title('val_loss_epoch')
-# axs[1,1].legend()
+ax = fig.add_subplot(2,2,1)
+# step_data = data[['step','grad_2_norm_step']].dropna()
+epoch_data = data[['epoch','grad_2_norm_epoch']].dropna()
+# ax.plot(step_data['step'], step_data['grad_2_norm_step'], ',', label='step')
+ax.plot(epoch_data['epoch'], epoch_data['grad_2_norm_epoch'])
+ax.set_title('Gradient norm epoch mean')
+# ax.legend()
 
-fig.suptitle(title)
+
+ax = fig.add_subplot(1,2,2)
+
+
+# ax = fig.add_subplot(2,2,4)
+epoch_data = data[['epoch','val_loss_epoch']].dropna()
+ax.plot(epoch_data['epoch'], epoch_data['val_loss_epoch'], label='Validation loss')
+ax.set_title('Loss')
+# ax.legend()
+
+epoch_data = data[['epoch','train_loss_epoch']].dropna()
+# ax.plot(step_data['step'], step_data['train_loss_step'], ',', label='Train step')
+ax.plot(epoch_data['epoch'], epoch_data['train_loss_epoch'], label='Trainc´loss')
+ax.set_title('Training curve')
+ax.set_ylim(min(np.min(data[['train_loss_epoch', 'val_loss_epoch']]))-0.01, 0.11)
+
+ax.set_xlabel('Epoch')
+ax.set_ylabel('Loss')
+ax.legend()
+
+
+ax = fig.add_subplot(2,2,3)
+step_data = data[['step','grad_2_norm_step']].dropna()
+ax.hist(step_data['grad_2_norm_step'], bins=100, density=True)
+ax.set_title('Histogram of gradient norm step')
+
 fig.tight_layout()
+fig.suptitle(title)
+
 plt.show()
-print(len(grad_norm_step))
-
-
-
-# %%
