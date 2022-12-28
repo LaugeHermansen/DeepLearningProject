@@ -19,7 +19,7 @@ import os
 
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint, TQDMProgressBar
 from pytorch_lightning.loggers import CSVLogger
 
 from speech_datamodule import SpeechDataModule
@@ -94,12 +94,15 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
         flush_logs_every_n_steps=10
         )
     
+    progress_bar = TQDMProgressBar(refresh_rate=100)
+
+    
     if params.accelerator == 'gpu':
         assert torch.cuda.is_available(), "CUDA is not available."
 
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback], # runs at the end of every train loop
+        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback, progress_bar], # runs at the end of every train loop
         log_every_n_steps=10,
         max_epochs=max_epochs,
         accelerator=params.accelerator,

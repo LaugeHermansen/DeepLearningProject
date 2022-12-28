@@ -9,8 +9,9 @@ import os
 experiments = [
     # ("from_bottom_v3_42", "version_1"),
     # ("from_bottom_v3_42", "version_2"),
-    # ("from_bottom_v8_42", "version_0"),
-    ("from_bottom_RAM_42", "version_0"),
+    ("from_bottom_v8_42", "version_0"),
+    # ("from_bottom_RAM_42", "version_0"),
+    # ("from_bottom_RAM_42", "version_1"),
     ]
 
 metrics_paths = [os.path.join("experiments", exp[0], "log", exp[1], "metrics.csv") for exp in experiments]
@@ -23,7 +24,8 @@ data = [pd.read_csv(path) for path in metrics_paths]
 
 grad_norm_step = np.concatenate([d['grad_2_norm_step'].dropna().to_numpy() for d in data])
 train_loss_step = np.concatenate([d['train_loss_step'].dropna().to_numpy() for d in data])
-val_loss_epoch = np.concatenate([d['val_loss_epoch'].dropna().to_numpy() for d in data])
+val_loss_epoch = np.concatenate([d['val_loss_epoch'].dropna().to_numpy() for d in data if "val_loss_epoch" in d.columns])
+
 
 start = 10
 conv_width = 50
@@ -43,6 +45,7 @@ axs[0,1].set_title('train_loss_step')
 # axs[0,1].legend()
 axs[1,0].hist(grad_norm_step[start:], bins=100, label='histogram of grad_norm_step')
 axs[1,0].set_title('histogram of grad_norm_step')
+
 
 axs[1,1].plot(val_loss_epoch, label='val_loss_epoch')
 if len(val_loss_epoch) > conv_width:
