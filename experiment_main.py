@@ -35,7 +35,7 @@ from params import params
 def main():
 
     #########################################################################
-    # -------------- specify the options for the eperiment ------------------
+    # -------------- specify the options for the experiment -----------------
 
     experiment_name = 'from_bottom_v8'
     global_seed = 42

@@ -48,8 +48,6 @@ class SpeechDatasetBase(Dataset):
         mask_set(set2, ~mask)
         return set1, set2
 
-        
-        
 
     def ignore_item(self, idx):
         self.ignored_files.append(self.audio_file_paths[idx])
@@ -168,14 +166,14 @@ class SpeechDataModule(pl.LightningDataModule):
         # Assign Train/val split(s) for use in Dataloaders
         if stage == 'fit':
             audio_path_train = os.path.join(self.params.data_dir_root, self.params.train_dir)
-            spec_path_train = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.train_dir)
+            spec_path_train = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.train_dir)
             if self.params.val_dir is None:
                 # load train set - split train set into train and val
                 self.val_set, self.train_set = self.data_class(audio_path_train, spec_path_train).split(self.params.val_size)
             else:
                 # load train and val set
                 audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
-                spec_path_val = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.val_dir)
+                spec_path_val = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.val_dir)
                 
                 self.val_set = self.data_class(audio_path_val, spec_path_val)
                 self.train_set = self.data_class(audio_path_train, spec_path_train)
@@ -187,7 +185,7 @@ class SpeechDataModule(pl.LightningDataModule):
             
         if stage == 'test':
             audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
-            spec_path_test = os.path.join(self.params.project_dir_root, 'spectrograms', self.params.test_dir)
+            spec_path_test = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.test_dir)
             self.test_set = self.data_class(audio_path_test, spec_path_test)
             self.test_set.timer = Timer(self.use_timing)
             self.test_set.prepare_data(self.params)

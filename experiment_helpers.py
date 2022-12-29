@@ -28,6 +28,7 @@ from diffwave_model import DiffWave
 
 from datetime import timedelta
 from tools import mkdir, Timer
+import numpy as np
 
 #%%
 
@@ -44,6 +45,10 @@ class StoreGradNormCallback(pl.Callback):
 
         pl_module.log('grad_2_norm', compute_grad_norm(pl_module), on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
+class StoreValSplit(pl.Callback):
+
+    def on_train_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):
+        np.save("val_files.npy", trainer.datamodule.val_set.audio_file_paths)
 
 def update_gitignore(params):
     
