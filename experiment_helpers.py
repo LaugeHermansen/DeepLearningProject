@@ -24,11 +24,12 @@ from pytorch_lightning.loggers import CSVLogger
 
 from speech_datamodule import SpeechDataModule
 from diffwave_model import DiffWave
-
+from glob import glob
 
 from datetime import timedelta
 from tools import mkdir, Timer
 import numpy as np
+import shutil
 
 #%%
 
@@ -65,14 +66,16 @@ def update_gitignore(params):
                 print(f'added to .gitignore: \"{path}\"')
 
 
-def get_trainer(params, max_epochs, save_dir):
+def get_trainer(params, max_epochs, checkpoint_dir, results_dir):
 
     # store grad norm
     store_grad_norm_callback = StoreGradNormCallback()
+    progress_bar = TQDMProgressBar(refresh_rate=100)
+    save_val_split = StoreValSplit()
 
     # save model every 1 hour
     checkpoint_callback_time = ModelCheckpoint(
-        dirpath=save_dir,
+        dirpath=checkpoint_dir,
         filename='time-{epoch}-{val_loss:.6f}',
         every_n_epochs=15,
         save_top_k=-1,
@@ -80,7 +83,7 @@ def get_trainer(params, max_epochs, save_dir):
     
     # save k best end of epoch models
     checkpoint_callback_top_k = ModelCheckpoint(
-        dirpath=save_dir,
+        dirpath=checkpoint_dir,
         filename='k-{epoch}-{val_loss:.6f}',
         save_top_k=3,
         monitor='val_loss',
@@ -89,20 +92,18 @@ def get_trainer(params, max_epochs, save_dir):
     
     # create logger
     logger = CSVLogger(
-        save_dir=save_dir,
+        save_dir=results_dir,
         name='log',
         flush_logs_every_n_steps=10
         )
     
-    progress_bar = TQDMProgressBar(refresh_rate=100)
 
-    
     if params.accelerator == 'gpu':
         assert torch.cuda.is_available(), "CUDA is not available."
 
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback, progress_bar], # runs at the end of every train loop
+        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback, progress_bar, save_val_split], # runs at the end of every train loop
         log_every_n_steps=10,
         max_epochs=max_epochs,
         accelerator=params.accelerator,
@@ -112,18 +113,33 @@ def get_trainer(params, max_epochs, save_dir):
         # track_grad_norm=2,
     )
 
-    return trainer, save_dir
+    return trainer
 
 
-def fit_model(model: DiffWave, params, global_seed, max_epochs, save_dir, use_timing=False):
+def fit_model(model: DiffWave, params, experiment_name, global_seed, max_epochs, main_file_path, use_timing=False):
+
+    checkpoint_dir = os.path.join(params.project_dir_root, params.checkpoint_dir_root, f'{experiment_name}_{global_seed}')
+    mkdir(checkpoint_dir)
+    results_dir = os.path.join(params.project_dir_root, params.results_dir_root, f'{experiment_name}_{global_seed}')
+    mkdir(results_dir)
+    exp_script_dir = os.path.join(results_dir, 'experiment_scripts')
+    mkdir(exp_script_dir)
     
+    # save the experiment script
+    script_names = glob(os.path.join(exp_script_dir, 'run_script_version*.py'))
+    versions = [int(name.split('run_script_version')[-1].split('.')[0]) for name in script_names]
+    if len(versions) == 0: version = 0
+    else: version = max(versions) + 1
+    shutil.copy(main_file_path, os.path.join(exp_script_dir, f'run_script_version{version}.py'))
+
+
     timer_experiment_helpers = Timer(use_timing)
     model.use_timing(use_timing)
     pl.seed_everything(global_seed, workers=True)
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params, use_timing=use_timing)
     timer_experiment_helpers()
-    trainer, save_dir = get_trainer(params, max_epochs, save_dir)
+    trainer, save_dir = get_trainer(params, max_epochs, checkpoint_dir, results_dir)
     timer_experiment_helpers("fitting model")
     ckpt_path = os.path.join(save_dir, params.checkpoint_name) if params.checkpoint_name is not None else None
     if ckpt_path is not None:
@@ -132,7 +148,6 @@ def fit_model(model: DiffWave, params, global_seed, max_epochs, save_dir, use_ti
     timer_experiment_helpers()
     update_gitignore(params)
 
-    #return timers
     return data.val_set.timer, data.train_set.timer, timer_experiment_helpers, model.timer
     
 
