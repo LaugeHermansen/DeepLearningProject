@@ -65,10 +65,7 @@ def update_gitignore(params):
                 print(f'added to .gitignore: \"{path}\"')
 
 
-def get_trainer(params, exp_name, global_seed, max_epochs):
-
-    save_dir = os.path.join(params.project_dir_root, 'experiments', f'{exp_name}_{global_seed}')
-    mkdir(save_dir)
+def get_trainer(params, max_epochs, save_dir):
 
     # store grad norm
     store_grad_norm_callback = StoreGradNormCallback()
@@ -77,8 +74,6 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     checkpoint_callback_time = ModelCheckpoint(
         dirpath=save_dir,
         filename='time-{epoch}-{val_loss:.6f}',
-        # train_time_interval=timedelta(hours=1),
-        # train_time_interval=timedelta(hours=1),
         every_n_epochs=15,
         save_top_k=-1,
         )
@@ -120,7 +115,7 @@ def get_trainer(params, exp_name, global_seed, max_epochs):
     return trainer, save_dir
 
 
-def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_timing=False):
+def fit_model(model: DiffWave, params, global_seed, max_epochs, save_dir, use_timing=False):
     
     timer_experiment_helpers = Timer(use_timing)
     model.use_timing(use_timing)
@@ -128,13 +123,11 @@ def fit_model(model: DiffWave, params, exp_name, global_seed, max_epochs, use_ti
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params, use_timing=use_timing)
     timer_experiment_helpers()
-    trainer, save_dir = get_trainer(params, exp_name, global_seed, max_epochs)
+    trainer, save_dir = get_trainer(params, max_epochs, save_dir)
     timer_experiment_helpers("fitting model")
     ckpt_path = os.path.join(save_dir, params.checkpoint_name) if params.checkpoint_name is not None else None
     if ckpt_path is not None:
         assert os.path.exists(ckpt_path), f"checkpoint path {ckpt_path} does not exist"
-        print(f"loading checkpoint from {ckpt_path}")
-        # model.load_from_checkpoint(ckpt_path)
     trainer.fit(model, data, ckpt_path=ckpt_path,)
     timer_experiment_helpers()
     update_gitignore(params)

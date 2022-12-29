@@ -31,14 +31,14 @@ base_params = dict(
     spectrogram_dir_root = 'spectrograms', # the root dir of the spectrogram files
     # upsampler_target_dir_root = '/dtu/blackhole/11/155505/upsampler_targets', # the root dir of the upsampler target files
     project_dir_root = '', # the root dir of the project files
-    chekcpoint_dir_root = '/dtu/blackhole/11/155505/checkpoints', # the root dir of the checkpoint files
+    checkpoint_dir_root = '/dtu/blackhole/11/155505/checkpoints', # the root dir of the checkpoint files
     results_dir_root = 'results',
 
     # data_dir_root = '/dtu/blackhole/11/155505/audio', # the root dir of the data files
     # spectrogram_dir_root = '/dtu/blackhole/11/155505/spectrograms', # the root dir of the spectrogram files
     # upsampler_target_dir_root = '/dtu/blackhole/11/155505/upsampler_targets', # the root dir of the upsampler target files
     # project_dir_root = '', # the root dir of the project files
-    # chekcpoint_dir_root = '/dtu/blackhole/11/155505/checkpoints', # the root dir of the checkpoint files
+    # checkpoint_dir_root = '/dtu/blackhole/11/155505/checkpoints', # the root dir of the checkpoint files
     # results_dir_root = 'results',
 
 
