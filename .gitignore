@@ -2,6 +2,7 @@
 /archive/**
 /tests/**
 spectrograms/**
+spectrograms_old/**
 
 *.out
 *.err
