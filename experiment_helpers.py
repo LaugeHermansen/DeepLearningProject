@@ -139,9 +139,9 @@ def fit_model(model: DiffWave, params, experiment_name, global_seed, max_epochs,
     timer_experiment_helpers("preprocessing data")
     data = SpeechDataModule(params=params, use_timing=use_timing)
     timer_experiment_helpers()
-    trainer, save_dir = get_trainer(params, max_epochs, checkpoint_dir, results_dir)
+    trainer = get_trainer(params, max_epochs, checkpoint_dir, results_dir)
     timer_experiment_helpers("fitting model")
-    ckpt_path = os.path.join(save_dir, params.checkpoint_name) if params.checkpoint_name is not None else None
+    ckpt_path = os.path.join(checkpoint_dir, params.checkpoint_name) if params.checkpoint_name is not None else None
     if ckpt_path is not None:
         assert os.path.exists(ckpt_path), f"checkpoint path {ckpt_path} does not exist"
     trainer.fit(model, data, ckpt_path=ckpt_path,)
