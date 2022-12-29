@@ -77,7 +77,7 @@ class SpeechDatasetBase(Dataset):
         for i in tqdm(range(len(self.audio_file_paths)), desc=f'Preprocessing {self.audio_dir}'):
             audio_file_path = self.audio_file_paths[i]
             spec_file_path = self.spec_file_paths[i]
-
+            assert os.path.exists(audio_file_path), f"Audio file not found: {audio_file_path}, {self.audio_dir}, {self.spec_dir}"
             if os.path.exists(spec_file_path):
                 continue
             
