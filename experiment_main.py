@@ -51,7 +51,7 @@ def main():
     # ----------------- don't change anything below this line ---------------
     #########################################################################
 
-    save_dir = os.path.join(params.project_dir_root, 'experiments', f'{experiment_name}_{global_seed}')
+    save_dir = os.path.join(params.project_dir_root, params.checkpoint_dir_root, f'{experiment_name}_{global_seed}')
     mkdir(save_dir)
     exp_script_dir = os.path.join(save_dir, 'experiment_scripts')
     mkdir(exp_script_dir)
@@ -65,7 +65,7 @@ def main():
         version = max(versions) + 1
     shutil.copy(__main__.__file__, os.path.join(exp_script_dir, f'run_script_version{version}.py'))
 
-    fit_model(model, params, experiment_name, global_seed, max_epochs)
+    fit_model(model, params, experiment_name, global_seed, max_epochs, save_dir)
     
 
 #%%
