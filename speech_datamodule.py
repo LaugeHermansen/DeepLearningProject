@@ -167,7 +167,7 @@ class SpeechDataModule(pl.LightningDataModule):
         if stage == 'fit':
             audio_path_train = os.path.join(self.params.data_dir_root, self.params.train_dir)
             spec_path_train = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.train_dir)
-            if self.params.val_dir is None:
+            if (self.params.val_dir is None) and False:
                 # load train set - split train set into train and val
                 self.val_set, self.train_set = self.data_class(audio_path_train, spec_path_train).split(self.params.val_size)
             else:

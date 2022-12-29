@@ -46,10 +46,6 @@ class StoreGradNormCallback(pl.Callback):
 
         pl_module.log('grad_2_norm', compute_grad_norm(pl_module), on_step=True, on_epoch=True, prog_bar=True, logger=True)
 
-class StoreValSplit(pl.Callback):
-
-    def on_train_epoch_start(self, trainer: "pl.Trainer", pl_module: "pl.LightningModule"):
-        np.save("val_files.npy", trainer.datamodule.val_set.audio_file_paths)
 
 def update_gitignore(params):
     
@@ -70,8 +66,9 @@ def get_trainer(params, max_epochs, checkpoint_dir, results_dir):
 
     # store grad norm
     store_grad_norm_callback = StoreGradNormCallback()
+
+    #costum proqress bar
     progress_bar = TQDMProgressBar(refresh_rate=100)
-    save_val_split = StoreValSplit()
 
     # save model every 1 hour
     checkpoint_callback_time = ModelCheckpoint(
@@ -103,7 +100,7 @@ def get_trainer(params, max_epochs, checkpoint_dir, results_dir):
 
 
     trainer = pl.Trainer(
-        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback, progress_bar, save_val_split], # runs at the end of every train loop
+        callbacks=[checkpoint_callback_time, checkpoint_callback_top_k, store_grad_norm_callback, progress_bar], # runs at the end of every train loop
         log_every_n_steps=10,
         max_epochs=max_epochs,
         accelerator=params.accelerator,

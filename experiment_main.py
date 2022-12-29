@@ -37,12 +37,12 @@ def main():
     #########################################################################
     # -------------- specify the options for the experiment -----------------
 
-    experiment_name = 'from_bottom_v3'
+    experiment_name = 'from_bottom_v8'
     global_seed = 42
     max_epochs = 100000
     
     params.gradient_clip_val = 100.
-    params.checkpoint_name = "time-epoch=284-val_loss=0.039004.ckpt"
+    params.checkpoint_name = "time-epoch=404-val_loss=0.038726.ckpt"
     # params.load_data_to_ram = True
 
     # load the model somehow
