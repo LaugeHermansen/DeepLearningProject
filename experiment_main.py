@@ -51,6 +51,9 @@ def main():
     # ----------------- don't change anything below this line ---------------
     #########################################################################
 
+    print(params.data_dir_root, params.train_dir, params.val_dir, params.test_dir)
+    
+
     fit_model(model, params, experiment_name, global_seed, max_epochs, __main__.__file__)
     
 
