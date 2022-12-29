@@ -37,12 +37,13 @@ def main():
     #########################################################################
     # -------------- specify the options for the experiment -----------------
 
-    experiment_name = 'from_bottom_v8'
+    experiment_name = 'from_bottom_v8_2'
     global_seed = 42
     max_epochs = 100000
-    
-    params.gradient_clip_val = 100.
-    params.checkpoint_name = "time-epoch=404-val_loss=0.038726.ckpt"
+
+    params.learning_rate = 5e-5
+    params.gradient_clip_val = 80.
+    params.checkpoint_name = "time-epoch=479-val_loss=0.040237.ckpt"
     # params.load_data_to_ram = True
 
     # load the model somehow
@@ -51,7 +52,9 @@ def main():
     # ----------------- don't change anything below this line ---------------
     #########################################################################
 
-    fit_model(model, params, experiment_name, global_seed, max_epochs, __main__.__file__)
+    src = str(__main__.__file__)
+
+    fit_model(model, params, experiment_name, global_seed, max_epochs, src)
     
 
 #%%

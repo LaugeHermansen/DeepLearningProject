@@ -93,7 +93,7 @@ if False:
         step_data_split.append(step_data.iloc[i*split_idx:(i+1)*split_idx])
 
 else:
-    split_epoch = [100, 320]
+    split_epoch = [320]
     split_epoch = [step_data.iloc[0]['epoch']] + split_epoch
     split_epoch.append(step_data.iloc[-1]['epoch']+1)
 
