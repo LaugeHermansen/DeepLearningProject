@@ -37,12 +37,12 @@ def main():
     #########################################################################
     # -------------- specify the options for the experiment -----------------
 
-    experiment_name = 'save_val_file_paths'
+    experiment_name = 'from_bottom_v3'
     global_seed = 42
     max_epochs = 100000
     
     params.gradient_clip_val = 100.
-    # params.checkpoint_name = "time-epoch=239-val_loss=0.042926.ckpt"
+    params.checkpoint_name = "time-epoch=284-val_loss=0.039004.ckpt"
     # params.load_data_to_ram = True
 
     # load the model somehow
@@ -50,9 +50,6 @@ def main():
 
     # ----------------- don't change anything below this line ---------------
     #########################################################################
-
-    print(params.data_dir_root, params.train_dir, params.val_dir, params.test_dir)
-    
 
     fit_model(model, params, experiment_name, global_seed, max_epochs, __main__.__file__)
     
