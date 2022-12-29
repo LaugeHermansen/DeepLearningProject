@@ -27,34 +27,37 @@ base_params = dict(
     
     # own params
 
-    data_dir_root = '/dtu/blackhole/11/155505/data', # the root dir of the data files
-    spectrogram_dir_root = 'spectrograms', # the root dir of the spectrogram files
-    # upsampler_target_dir_root = '/dtu/blackhole/11/155505/upsampler_targets', # the root dir of the upsampler target files
-    project_dir_root = '', # the root dir of the project files
-    checkpoint_dir_root = '/dtu/blackhole/11/155505/checkpoints', # the root dir of the checkpoint files
-    results_dir_root = 'results',
-
-    # data_dir_root = '/dtu/blackhole/11/155505/audio', # the root dir of the data files
-    # spectrogram_dir_root = '/dtu/blackhole/11/155505/spectrograms', # the root dir of the spectrogram files
-    # upsampler_target_dir_root = '/dtu/blackhole/11/155505/upsampler_targets', # the root dir of the upsampler target files
+    # data_dir_root = '/dtu/blackhole/11/155505/data', # the root dir of the data files
+    # spectrogram_dir_root = 'spectrograms', # the root dir of the spectrogram files
+    # # upsampler_target_dir_root = '/dtu/blackhole/11/155505/upsampler_targets', # the root dir of the upsampler target files
     # project_dir_root = '', # the root dir of the project files
     # checkpoint_dir_root = '/dtu/blackhole/11/155505/checkpoints', # the root dir of the checkpoint files
     # results_dir_root = 'results',
 
+    data_dir_root = '/dtu/blackhole/11/155505/audio', # the root dir of the data files
+    spectrogram_dir_root = '/dtu/blackhole/11/155505/spectrograms', # the root dir of the spectrogram files
+    upsampler_target_dir_root = '/dtu/blackhole/11/155505/upsampler_targets', # the root dir of the upsampler target files
+    project_dir_root = '', # the root dir of the project files
+    checkpoint_dir_root = 'experiments', # the root dir of the checkpoint files
+    results_dir_root = 'experiments',
+
 
     # audio dir - is relative to data_dir_root
-    train_dir = 'NST_dataset/dataset/train', #relative to data_dir
-    test_dir = 'NST_dataset/dataset/test',  #relative to data_dir
-    # train_dir = 'NST_dataset/train', #relative to data_dir
-    # test_dir = 'NST_dataset/test',  #relative to data_dir
-    val_dir = None, #relative to data_dir
-    val_size = 0.1, # if val_dir is None, val_size is used to split train_dir into train and val
-    
-    spectrogram_full_dir = '',
-    spectrogram_dir = '', # the version of spectrograms to use relative to spectrogram_dir_root
+    # train_dir = 'NST_dataset/dataset/train', #relative to data_dir
+    # test_dir = 'NST_dataset/dataset/test',  #relative to data_dir
 
-    # spectrogram_full_dir = 'full',
-    # spectrogram_dir = 'full', # the version of spectrograms to use relative to spectrogram_dir_root
+    train_dir = 'NST_dataset/train', #relative to data_dir
+    test_dir = 'NST_dataset/test',  #relative to data_dir
+    val_dir = 'NST_dataset/val', #relative to data_dir
+
+    # val_dir = None, #relative to data_dir
+    # val_size = 0.1, # if val_dir is None, val_size is used to split train_dir into train and val
+    
+    # spectrogram_full_dir = '',
+    # spectrogram_dir = '', # the version of spectrograms to use relative to spectrogram_dir_root
+
+    spectrogram_full_dir = 'full',
+    spectrogram_dir = 'full', # the version of spectrograms to use relative to spectrogram_dir_root
 
 
     num_workers = 4,
