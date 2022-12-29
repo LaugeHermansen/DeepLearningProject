@@ -9,8 +9,8 @@ for f in audio_file_paths:
     # move file to validation folder
     source = f.replace('/data/', '/audio/').replace('/dataset/','/')
     target = source.replace('/train/', '/val/')
-    # os.renames(source, target)
-    assert os.path.exists(source)
+    # assert os.path.exists(source)
+    os.renames(source, target)
 
 
 
