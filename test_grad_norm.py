@@ -10,9 +10,13 @@ experiments = [
     # (experiment_name, version, end_epoch (inclusive, None means all epochs are included))
     # ("from_bottom_v3_42", "version_1"),
     # ("from_bottom_v3_42", "version_2"),
-    ("from_bottom_v8_42", "version_0", 239),
-    ("from_bottom_v8_42", "version_1", 404),
-    ("from_bottom_v8_42", "version_2", None),
+    # ("from_bottom_v8_42", "version_0", 239),
+    # ("from_bottom_v8_42", "version_1", 404),
+    # ("from_bottom_v8_42", "version_2", None),
+    ("from_bottom_v8_2_42", "version_0", 239),
+    ("from_bottom_v8_2_42", "version_1", 404),
+    ("from_bottom_v8_2_42", "version_2", 479),
+    ("from_bottom_v8_2_42", "version_3", None),
     # ("from_bottom_RAM_42", "version_0"),
     # ("from_bottom_RAM_42", "version_1"),
     ]
