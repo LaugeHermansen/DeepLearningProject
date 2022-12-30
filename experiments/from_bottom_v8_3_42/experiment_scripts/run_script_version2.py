@@ -40,21 +40,14 @@ def main():
     experiment_name = 'from_bottom_v8_2'
     global_seed = 42
     max_epochs = 100000
-    checkpoint_name = "time-epoch=479-val_loss=0.040237.ckpt"
 
-    #params.learning_rate = 5e-5
+    params.learning_rate = 5e-5
     params.gradient_clip_val = 80.
+    params.checkpoint_name = "time-epoch=479-val_loss=0.040237.ckpt"
     # params.load_data_to_ram = True
 
-    ckpt_path = os.path.join(params.project_dir_root, params.checkpoint_dir_root, f'{experiment_name}_{global_seed}', checkpoint_name)
-
-
-    checkpoint = torch.load(ckpt_path)#, map_location=None if use_cuda else torch.device('cpu'))
-    model = DiffWave(params, measure_grad_norm=True)
-    model.load_state_dict(checkpoint['state_dict'])
-    
     # load the model somehow
-    
+    model = DiffWave(params, measure_grad_norm=True)
 
     # ----------------- don't change anything below this line ---------------
     #########################################################################

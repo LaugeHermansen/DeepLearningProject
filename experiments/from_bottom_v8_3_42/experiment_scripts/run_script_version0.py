@@ -26,7 +26,6 @@ from experiment_helpers import fit_model
 
 import shutil
 import __main__
-from glob import glob
 
 from params import params
 
@@ -35,38 +34,30 @@ from params import params
 def main():
 
     #########################################################################
-    # -------------- specify the options for the experiment -----------------
+    # -------------- specify the options for the eperiment ------------------
 
-    experiment_name = 'from_bottom_v8_2'
+    experiment_name = 'from_bottom_v8'
     global_seed = 42
     max_epochs = 100000
-    checkpoint_name = "time-epoch=479-val_loss=0.040237.ckpt"
-
-    #params.learning_rate = 5e-5
-    params.gradient_clip_val = 80.
-    # params.load_data_to_ram = True
-
-    ckpt_path = os.path.join(params.project_dir_root, params.checkpoint_dir_root, f'{experiment_name}_{global_seed}', checkpoint_name)
-
-
-    checkpoint = torch.load(ckpt_path)#, map_location=None if use_cuda else torch.device('cpu'))
-    model = DiffWave(params, measure_grad_norm=True)
-    model.load_state_dict(checkpoint['state_dict'])
     
+    params.gradient_clip_val = 100.
+    # params.checkpoint_name = "k-epoch=250-val_loss=0.041077.ckpt"
+    params.load_data_to_ram = True
+
     # load the model somehow
-    
+    model = DiffWave(params, measure_grad_norm=True)
 
     # ----------------- don't change anything below this line ---------------
     #########################################################################
 
-    src = str(__main__.__file__)
+    save_dir = os.path.join(params.project_dir_root, 'experiments', f'{experiment_name}_{global_seed}')
+    mkdir(save_dir)
 
-    fit_model(model, params, experiment_name, global_seed, max_epochs, src)
+    shutil.copy(__main__.__file__, os.path.join(save_dir, os.path.basename(__main__.__file__)))
     
-
-#%%
+    fit_model(model, params, experiment_name, global_seed, max_epochs)
+    
 
 if __name__ == '__main__':
     main()
-
 
