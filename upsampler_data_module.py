@@ -12,69 +12,71 @@ from torch.utils.data import DataLoader, Dataset, random_split
 import random
 from torch import nn
 
-class UpsamplerDatasetBase(Dataset):
-    def __init__(self, dataset, target_dir: str):
-        self.dataset = dataset
-        self.audio_dir = dataset.audio_dir
-        self.spec_dir = dataset.spec_dir
+import pytorch_lightning as pl
+
+from math import floor
+from glob import glob
+from tqdm import tqdm
+
+class UpsamplerDataset(Dataset):
+    def __init__(self, audio_dir, spec_dir, target_dir: str):
+        """
+        upsampler dataset
+
+        Parameters
+        ----------
+         * audio_dir: directory containing audio files
+         * spec_dir: directory containing spectrograms (the ones with the desired (reduced) resolution)
+         * target_dir: directory containing the upsampler outputs (the true output as produced on the original spectrogrms)
+        
+        """
+        self.audio_dir = audio_dir
         self.target_dir = target_dir
-        self.audio_file_paths = dataset.audio_file_paths
-        self.audio_filenames = dataset.audio_filenames
-        self.spec_file_paths = dataset.spec_file_paths
-        self.spec_filenames = dataset.spec_filenames
+        self.spec_dir = spec_dir
+        self.audio_file_paths = np.array([os.path.realpath(f) for f in glob(f"{audio_dir}/**/*.wav", recursive=True)])
+        self.audio_filenames = np.array([os.path.relpath(f, self.audio_dir) for f in self.audio_file_paths])
+        self.spec_filenames = np.array([f'{f}.spec.npy' for f in self.audio_filenames])
+        self.spec_file_paths = np.array([os.path.join(spec_dir, f) for f in self.spec_filenames])
         self.target_filenames = np.array([f'{f}.target.npy' for f in self.audio_filenames])
         self.target_file_paths = np.array([os.path.join(target_dir, f) for f in self.target_filenames])
 
-        self.ignored_files = dataset.ignored_files
-        
         for f in self.spec_file_paths:
             mkdir(os.path.dirname(f))
     
     def __len__(self):
         return len(self.audio_file_paths)
     
-    def _load_one_item(self, idx):
+    def __getitem__(self, idx):
         spec = np.load(self.spec_file_paths[idx])
         target = np.load(self.target_file_paths[idx])
         return spec, target
 
-    def generate_upsampler_targets(self, spectrogram_upsampler: nn.Module):
+    def generate_upsampler_targets(self, spec_full_dir, spectrogram_upsampler: nn.Module):
+        """
+        Generate the true upsampler outputs on the full spectrogrms
+
+        Parameters
+        ----------
+        spec_full_dir: directory containing the spectrograms with the original resolution
+        spectrogram_upsampler: the upsampler model
+        """
 
         for i in tqdm(range(len(self.dataset)), desc = "generating upsampler data"):
+            spec_full_path = os.path.join(spec_full_dir, self.spec_filenames[i])
+            assert os.path.exists(spec_full_path), f"full spec {spec_full_path} does not exist"
+            assert os.path.exists(self.spec_file_paths[i]), f"spec {self.spec_file_paths[i]} does not exist"
             if not os.path.exists(self.target_file_paths[i]):
                 spec = torch.from_numpy(np.load(self.spec_file_paths[i]))
                 target = spectrogram_upsampler(spec).detach().cpu().numpy()
                 np.save(target, self.target_file_paths[i])
 
-
-class UpsamplerDatasetDisk(UpsamplerDatasetBase):
-
-    def __getitem__(self, idx):
-        return self._load_one_item(idx)
-
-class UpsamplerDatasetRAM(UpsamplerDatasetBase):
-
-        def __init__(self, dataset: SpeechDatasetBase, model: DiffWave):
-            super(UpsamplerDatasetRAM).__init__(dataset, model)
-            self.specs = []
-            self.targets = []
-            for i in tqdm(range(len(self)), desc = "loading spectrograms"):
-                spec, target = self._load_one_item(i)
-                self.specs.append(spec)
-                self.targets.append(target)
-        
-        def __getitem__(self, idx):
-            return self.specs[idx], self.targets[idx]
-
-
 class UpsamplerDataModule(pl.LightningDataModule):
     """
     DataModule for the upsampler
     """
-    def __init__(self, params: AttrDict, speech_datamodule: SpeechDataModule):
+    def __init__(self, params: AttrDict):
         super().__init__()
         self.params = params
-        self.speech_datamodule = speech_datamodule
 
         # this is for improving speed
         self.num_workers = self.params.get('num_workers', os.cpu_count())
@@ -87,9 +89,6 @@ class UpsamplerDataModule(pl.LightningDataModule):
             'pin_memory': True,
             'drop_last': True
         }
-
-        if params.load_data_to_ram: self.data_class = UpsamplerDatasetRAM
-        else:                       self.data_class = UpsamplerDatasetDisk
     
     def prepare_data(self):
         self.

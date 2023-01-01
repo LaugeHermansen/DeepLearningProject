@@ -10,15 +10,13 @@ experiments = [
     # (experiment_name, version, end_epoch, offset)
     # ("from_bottom_v3_42", "version_1"),
     # ("from_bottom_v3_42", "version_2"),
-    # ("from_bottom_v8_42", "version_0", 239),
-    # ("from_bottom_v8_42", "version_1", 404),
-    # ("from_bottom_v8_42", "version_2", None),
+    # ("from_bottom_v8_42", "version_0", 239, 0),
+    # ("from_bottom_v8_42", "version_1", 404, 0),
+    # ("from_bottom_v8_42", "version_2", None, 0),
     ("from_bottom_v8_2_42", "version_0", 239, 0),
     ("from_bottom_v8_2_42", "version_1", 404, 0),
     ("from_bottom_v8_2_42", "version_2", 479, 0),
     ("from_bottom_v8_2_42", "version_5", None, 480),
-    # ("from_bottom_RAM_42", "version_0"),
-    # ("from_bottom_RAM_42", "version_1"),
     ]
 
 versions = {}

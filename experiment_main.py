@@ -46,6 +46,7 @@ def main():
     params.gradient_clip_val = 80.
     # params.load_data_to_ram = True
 
+
     ckpt_path = os.path.join(params.project_dir_root, params.checkpoint_dir_root, f'{experiment_name}_{global_seed}', checkpoint_name)
 
 
