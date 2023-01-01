@@ -15,7 +15,7 @@ from glob import glob
 from tqdm import tqdm
 from tools import mkdir, Timer
 
-class SpeechDatasetBase(Dataset):
+class SpeechDataset(Dataset):
     def __init__(self, audio_dir, spec_dir, use_timing=False):
         super().__init__()
         self.audio_dir = audio_dir
@@ -113,32 +113,12 @@ class SpeechDatasetBase(Dataset):
         self.timer()
         return signal.squeeze(0), spectrogram
 
-class SpeechDatasetDisk(SpeechDatasetBase):
-
     def __getitem__(self, idx):
         signal, spectrogram  = self._load_one_item(idx)
         return {
             'audio': signal,
             'spectrogram': spectrogram
-        }
-
-class SpeechDatasetRAM(SpeechDatasetBase):
-    
-    def __getitem__(self, idx):
-        return {
-            'audio': self.audio[idx],
-            'spectrogram': self.spectrogram[idx]
-        }
-    
-    def prepare_data(self, params):
-        super().prepare_data(params)
-        self.audio = []
-        self.spectrogram = []
-        for idx in tqdm(range(len(self)), desc=f"Loading audio and spectrogram into RAM, from {self.audio_dir}"):
-            signal, spectrogram = self._load_one_item(idx)
-            self.audio.append(signal)
-            self.spectrogram.append(spectrogram)
-        
+        }      
 
 class SpeechDataModule(pl.LightningDataModule):
     def __init__(self, params, use_timing=False):
@@ -158,25 +138,22 @@ class SpeechDataModule(pl.LightningDataModule):
             'pin_memory': True,
             'drop_last': True
         }
-
-        if params.load_data_to_ram: self.data_class = SpeechDatasetRAM
-        else:                       self.data_class = SpeechDatasetDisk
     
     def setup(self, stage):
         # Assign Train/val split(s) for use in Dataloaders
         if stage == 'fit':
             audio_path_train = os.path.join(self.params.data_dir_root, self.params.train_dir)
             spec_path_train = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.train_dir)
-            if (self.params.val_dir is None) and False:
-                # load train set - split train set into train and val
-                self.val_set, self.train_set = self.data_class(audio_path_train, spec_path_train).split(self.params.val_size)
-            else:
-                # load train and val set
-                audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
-                spec_path_val = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.val_dir)
-                
-                self.val_set = self.data_class(audio_path_val, spec_path_val)
-                self.train_set = self.data_class(audio_path_train, spec_path_train)
+            # if (self.params.val_dir is None) and False:
+            #     # load train set - split train set into train and val
+            #     self.val_set, self.train_set = SpeechDataset(audio_path_train, spec_path_train).split(self.params.val_size)
+            # else:
+            #     # load train and val set
+            audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
+            spec_path_val = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.val_dir)
+            
+            self.val_set = SpeechDataset(audio_path_val, spec_path_val)
+            self.train_set = SpeechDataset(audio_path_train, spec_path_train)
 
             self.val_set.timer = Timer(self.use_timing)
             self.train_set.timer = Timer(self.use_timing)
@@ -186,7 +163,7 @@ class SpeechDataModule(pl.LightningDataModule):
         if stage == 'test':
             audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
             spec_path_test = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.test_dir)
-            self.test_set = self.data_class(audio_path_test, spec_path_test)
+            self.test_set = SpeechDataset(audio_path_test, spec_path_test)
             self.test_set.timer = Timer(self.use_timing)
             self.test_set.prepare_data(self.params)
 

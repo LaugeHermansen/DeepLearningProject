@@ -1,5 +1,4 @@
 from params import params
-from speech_datamodule import SpeechDatasetBase, SpeechDataModule
 from diffwave_model import DiffWave
 from tools import AttrDict
 import torch
@@ -47,7 +46,7 @@ class UpsamplerDataset(Dataset):
         return len(self.audio_file_paths)
     
     def __getitem__(self, idx):
-        spec = np.load(self.spec_file_paths[idx])
+        spec = np.load(self.spec_file_paths[idx]).T
         target = np.load(self.target_file_paths[idx])
         return spec, target
 
@@ -60,15 +59,14 @@ class UpsamplerDataset(Dataset):
         spec_full_dir: directory containing the spectrograms with the original resolution
         spectrogram_upsampler: the upsampler model
         """
-
         for i in tqdm(range(len(self.dataset)), desc = "generating upsampler data"):
             spec_full_path = os.path.join(spec_full_dir, self.spec_filenames[i])
             assert os.path.exists(spec_full_path), f"full spec {spec_full_path} does not exist"
             assert os.path.exists(self.spec_file_paths[i]), f"spec {self.spec_file_paths[i]} does not exist"
             if not os.path.exists(self.target_file_paths[i]):
-                spec = torch.from_numpy(np.load(self.spec_file_paths[i]))
-                target = spectrogram_upsampler(spec).detach().cpu().numpy()
-                np.save(target, self.target_file_paths[i])
+                spec_full = np.load(spec_full_path).T
+                target = spectrogram_upsampler(spec_full).detach().cpu().numpy()
+                np.save(self.target_file_paths[i], target)
 
 class UpsamplerDataModule(pl.LightningDataModule):
     """
@@ -90,17 +88,42 @@ class UpsamplerDataModule(pl.LightningDataModule):
             'drop_last': True
         }
     
-    def prepare_data(self):
-        self.
+    def prepare_data(self, spectrogram_upsampler: nn.Module, stage = 'fit'):
+        """
+        Generate the true upsampler outputs on the full spectrogrms
 
+        Parameters
+        ----------
+        spectrogram_upsampler: the upsampler model
+        stage: 'fit' or 'test'
+        """
+        self.setup(stage)
+        if stage == 'fit':
+            spec_full_path_train = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_full_dir, self.params.train_dir)
+            spec_full_path_val = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_full_dir, self.params.val_dir)
+            self.train_set.generate_upsampler_targets(spec_full_path_train, spectrogram_upsampler)
+            self.val_set.generate_upsampler_targets(spec_full_path_val, spectrogram_upsampler)
+        if stage == 'test':
+            spec_full_path_test = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_full_dir, self.params.test_dir)
+            self.test_set.generate_upsampler_targets(spec_full_path_test, spectrogram_upsampler)
 
     def setup(self, stage):
-        # Assign Train/val split(s) for use in Dataloaders
         if stage == 'fit':
-            self.train_set = self.data_class(self.speech_datamodule.train_set)
-            self.val_set   = self.data_class(self.speech_datamodule.val_set  )
+            audio_path_train = os.path.join(self.params.data_dir_root, self.params.train_dir)
+            spec_path_train = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.train_dir)
+            spec_full_path_train = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_full_dir, self.params.train_dir)
+            audio_path_val = os.path.join(self.params.data_dir_root, self.params.val_dir)
+            spec_path_val = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.val_dir)
+            spec_full_path_val = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_full_dir, self.params.val_dir)
+            
+            self.val_set = UpsamplerDataset(audio_path_val, spec_path_val, spec_full_path_val)
+            self.train_set = UpsamplerDataset(audio_path_train, spec_path_train, spec_full_path_train)
+        
         if stage == 'test':
-            self.test_set  = self.data_class(self.speech_datamodule.test_set , self.model)
+            audio_path_test = os.path.join(self.params.data_dir_root, self.params.test_dir)
+            spec_path_test = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_dir, self.params.test_dir)
+            spec_full_path_test = os.path.join(self.params.spectrogram_dir_root, self.params.spectrogram_full_dir, self.params.test_dir)
+            self.test_set = UpsamplerDataset(audio_path_test, spec_path_test, spec_full_path_test)
 
     def train_dataloader(self):
         return DataLoader(self.train_set, **self.loader_kwargs)
@@ -122,6 +145,7 @@ class UpsamplerDataModule(pl.LightningDataModule):
             
             # Filter out records that aren't long enough.
             assert self.params.crop_mel_frames <= len(spec)
+            assert len(spec) * samples_per_frame == len(target) # TODO check the shape of the target
 
             start = random.randint(0, spec.shape[0] - self.params.crop_mel_frames)
             end = start + self.params.crop_mel_frames
