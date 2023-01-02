@@ -42,6 +42,7 @@ base_params = dict(
     project_dir_root = '', # the root dir of the project files
     checkpoint_dir_root = 'experiments', # the root dir of the checkpoint files
     results_dir_root = 'experiments',
+    model_evaluator_results_dir = 'model_evaluator_results',
 
 
     # audio dir - is relative to data_dir_root

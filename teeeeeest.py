@@ -5,6 +5,7 @@ import os
 from tqdm import tqdm
 
 from speech_datamodule import SpeechDataset, SpeechDataModule
+from params import params
 
 # audio_file_paths = np.load("val_files.npy")
 
@@ -16,6 +17,8 @@ from speech_datamodule import SpeechDataset, SpeechDataModule
 #     # assert os.path.exists(source)
 #     os.renames(source, target)
 
+data = SpeechDataModule(params)
 
+data.setup('fit')
 
 

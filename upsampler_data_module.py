@@ -19,6 +19,7 @@ from tqdm import tqdm
 
 class UpsamplerDataset(Dataset):
     def __init__(self, audio_dir, spec_dir, target_dir):
+        
         """
         upsampler dataset
 
@@ -27,8 +28,8 @@ class UpsamplerDataset(Dataset):
          * audio_dir: directory containing audio files
          * spec_dir: directory containing spectrograms (the ones with the desired (reduced) resolution)
          * target_dir: directory containing the upsampler outputs (the true output as produced on the original spectrogrms)
-        
         """
+
         self.audio_dir = audio_dir
         self.target_dir = target_dir
         self.spec_dir = spec_dir
@@ -41,7 +42,6 @@ class UpsamplerDataset(Dataset):
 
         for f in self.spec_file_paths:
             mkdir(os.path.dirname(f))
-    
 
     def __len__(self):
         return len(self.audio_file_paths)
