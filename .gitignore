@@ -6,7 +6,7 @@ spectrograms_old/**
 
 *.out
 *.err
-experiments/**/*.ckpt
+# experiments/**/*.ckpt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
