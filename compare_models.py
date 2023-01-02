@@ -18,10 +18,11 @@ ORIGINAL_AUDIO_PATH = os.path.join(params.data_dir_root, EVAL_PATH)
 ORIGINAL_SPEC_PATH = os.path.join(params.spectrogram_dir_root, params.spectrogram_full_dir, EVAL_PATH)
 
 class ModelEvaluator:
-    def __init__(self, model: DiffWave, experiment_dir):
+    def __init__(self, model: DiffWave, experiment_dir, spectrogram_dir=None):
         # init parameters
         self.model = model
         self.experiment_dir = experiment_dir
+        self.spectrogram_dir = spectrogram_dir if spectrogram_dir is not None else experiment_dir
         self.path = os.path.join(params.project_dir_root, params.model_evaluator_results_dir, experiment_dir)
         os.makedirs(self.path, exist_ok=True)
 
@@ -29,9 +30,9 @@ class ModelEvaluator:
         self.generated_spec_path = os.path.join(params.generated_spectrogram_dir_root, experiment_dir)
 
         self.original_dataset = SpeechDataset(ORIGINAL_AUDIO_PATH, ORIGINAL_SPEC_PATH)
-        self.original_dataset.prepare_data() # to remove
+        self.original_dataset.prepare_data(params) # to remove
 
-        self.reduced_spec_file_paths = [os.path.join(self.spectrogram_dir_root, experiment_dir, f) for f in self.original_dataset.spec_filenames]
+        self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, experiment_dir, f) for f in self.original_dataset.spec_filenames]
         self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
         self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
         
@@ -45,6 +46,14 @@ class ModelEvaluator:
         self.audio_generated = False
         self.spec_generated = False
         self.loss = None
+        
+        self.sanity_check()
+
+
+    def sanity_check(self):
+        assert os.path.exists(self.original_dataset.audio_file_paths[0]), f"{self.original_dataset.audio_file_paths[0]}"
+        assert os.path.exists(self.original_dataset.spec_file_paths[0]), f"{self.original_dataset.spec_file_paths[0]}"
+        assert os.path.exists(self.reduced_spec_file_paths[0]), f"{self.reduced_spec_file_paths[0]}"
 
     def __repr__(self):
         ret = f"ModelEvaluator for {self.path} with {len(self)} samples\n"
