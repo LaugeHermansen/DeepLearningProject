@@ -70,8 +70,8 @@ class ModelEvaluator:
     def __len__(self):
         return len(self.original_dataset)
 
-    def evaluate(self, overwrite=False):
-        self.generate_audio_from_spectrograms()
+    def evaluate(self, overwrite=False, parallel=False):
+        self.generate_audio_from_spectrograms(parallel)
         self.generate_spectrograms_from_generated_audio()
         self.compute_loss(overwrite=overwrite)
 
@@ -92,7 +92,7 @@ class ModelEvaluator:
             self.loss = np.array(loss)
             np.save(os.path.join(self.path, "loss.npy"), self.loss)
 
-    def generate_audio_from_spectrograms(self):
+    def generate_audio_from_spectrograms(self, parallel=False):
         # generate audio from spectrograms
         def generate(spec_paths, audio_paths, sample_rate, model, device, verbose=False):
             if verbose: iterator = tqdm(range(len(spec_paths)), desc=f"Generating audio from spectrograms {self.experiment_dir}")
@@ -106,17 +106,20 @@ class ModelEvaluator:
                     audio = model.predict_step({"spectrogram": spec}, None)
                     torchaudio.save(audio_path, audio, sample_rate)
         
-        n_cpus = os.cpu_count()
-        batch_size = np.ceil(len(self) // n_cpus).astype(int)
-        processes = []
-        for i in range(n_cpus):
-            spec_paths = self.reduced_spec_file_paths[i*batch_size:(i+1)*batch_size]
-            audio_paths = self.generated_audio_file_paths[i*batch_size:(i+1)*batch_size]
-            p = mp.Process(target=generate, args=(spec_paths[i], audio_paths[i], self.sample_rate, self.model, DEVICE, i==0))
-            p.start()
-            processes.append(p)
-        for p in processes:
-            p.join()
+        if parallel:
+            n_cpus = os.cpu_count()
+            batch_size = np.ceil(len(self) // n_cpus).astype(int)
+            processes = []
+            for i in range(n_cpus):
+                spec_paths = self.reduced_spec_file_paths[i*batch_size:(i+1)*batch_size]
+                audio_paths = self.generated_audio_file_paths[i*batch_size:(i+1)*batch_size]
+                p = mp.Process(target=generate, args=(spec_paths[i], audio_paths[i], self.sample_rate, self.model, DEVICE, i==0))
+                p.start()
+                processes.append(p)
+            for p in processes:
+                p.join()
+        else:
+            generate(self.reduced_spec_file_paths, self.generated_audio_file_paths, self.sample_rate, self.model, DEVICE, verbose=True)
         
 
         
