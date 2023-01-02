@@ -26,13 +26,13 @@ class ModelEvaluator:
         self.path = os.path.join(params.project_dir_root, params.model_evaluator_results_dir, experiment_dir)
         os.makedirs(self.path, exist_ok=True)
 
-        self.generated_audio_path = os.path.join(params.generated_audio_dir_root, experiment_dir)
-        self.generated_spec_path = os.path.join(params.generated_spectrogram_dir_root, experiment_dir)
+        self.generated_audio_path = os.path.join(params.generated_audio_dir_root, experiment_dir, EVAL_PATH)
+        self.generated_spec_path = os.path.join(params.generated_spectrogram_dir_root, experiment_dir, EVAL_PATH)
 
         self.original_dataset = SpeechDataset(ORIGINAL_AUDIO_PATH, ORIGINAL_SPEC_PATH)
         self.original_dataset.prepare_data(params) # to remove
 
-        self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, experiment_dir, f) for f in self.original_dataset.spec_filenames]
+        self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, experiment_dir, EVAL_PATH, f) for f in self.original_dataset.spec_filenames]
         self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
         self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
         
