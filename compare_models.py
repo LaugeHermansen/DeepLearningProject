@@ -32,16 +32,14 @@ class ModelEvaluator:
         self.original_dataset = SpeechDataset(ORIGINAL_AUDIO_PATH, ORIGINAL_SPEC_PATH)
         self.original_dataset.prepare_data(params) # to remove
 
-        self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, experiment_dir, EVAL_PATH, f) for f in self.original_dataset.spec_filenames]
+        self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, self.spectrogram_dir, EVAL_PATH, f) for f in self.original_dataset.spec_filenames]
         self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
         self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
         
-        for f in self.reduced_spec_file_paths:
-            os.makedirs(os.path.dirname(f), exist_ok=True)
-        for f in self.generated_audio_file_paths:
-            os.makedirs(os.path.dirname(f), exist_ok=True)
-        for f in self.generated_spec_file_paths:
-            os.makedirs(os.path.dirname(f), exist_ok=True)
+        #for f in self.generated_audio_file_paths:
+        #    os.makedirs(os.path.dirname(f), exist_ok=True)
+        #for f in self.generated_spec_file_paths:
+        #    os.makedirs(os.path.dirname(f), exist_ok=True)
         
         self.audio_generated = False
         self.spec_generated = False
@@ -132,7 +130,7 @@ if __name__ == "__main__":
 
     models = [DiffWave.load_from_checkpoint(path) for path in paths]
 
-    model_evaluators = [ModelEvaluator(model, exp_name) for model, exp_name in zip(models, exp_names)]
+    model_evaluators = [ModelEvaluator(model, exp_name, 'full') for model, exp_name in zip(models, exp_names)]
 
     for evaluator in model_evaluators:
         print(evaluator)
