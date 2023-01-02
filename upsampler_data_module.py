@@ -18,7 +18,7 @@ from glob import glob
 from tqdm import tqdm
 
 class UpsamplerDataset(Dataset):
-    def __init__(self, audio_dir, spec_dir, target_dir: str):
+    def __init__(self, audio_dir, spec_dir, target_dir):
         """
         upsampler dataset
 
@@ -32,16 +32,17 @@ class UpsamplerDataset(Dataset):
         self.audio_dir = audio_dir
         self.target_dir = target_dir
         self.spec_dir = spec_dir
-        self.audio_file_paths = np.array([os.path.realpath(f) for f in glob(f"{audio_dir}/**/*.wav", recursive=True)])
-        self.audio_filenames = np.array([os.path.relpath(f, self.audio_dir) for f in self.audio_file_paths])
-        self.spec_filenames = np.array([f'{f}.spec.npy' for f in self.audio_filenames])
-        self.spec_file_paths = np.array([os.path.join(spec_dir, f) for f in self.spec_filenames])
-        self.target_filenames = np.array([f'{f}.target.npy' for f in self.audio_filenames])
+        self.audio_file_paths  = np.array([os.path.realpath(f) for f in glob(f"{audio_dir}/**/*.wav", recursive=True)])
+        self.audio_filenames   = np.array([os.path.relpath(f, self.audio_dir) for f in self.audio_file_paths])
+        self.spec_filenames    = np.array([f'{f}.spec.npy' for f in self.audio_filenames])
+        self.spec_file_paths   = np.array([os.path.join(spec_dir, f) for f in self.spec_filenames])
+        self.target_filenames  = np.array([f'{f}.target.npy' for f in self.audio_filenames])
         self.target_file_paths = np.array([os.path.join(target_dir, f) for f in self.target_filenames])
 
         for f in self.spec_file_paths:
             mkdir(os.path.dirname(f))
     
+
     def __len__(self):
         return len(self.audio_file_paths)
     

@@ -1,0 +1,94 @@
+#%%
+
+
+from params import params
+from upsampler_data_module import UpsamplerDataModule, UpsamplerDataset
+from speech_datamodule import SpeechDataModule, SpeechDataset, prepare_data
+import os
+from diffwave_model import DiffWave
+from tqdm import tqdm
+import numpy as np
+import torch
+import torchaudio
+
+EVAL_PATH = params.val_dir
+
+
+ORIGINAL_AUDIO_PATH = os.path.join(params.data_dir_root, EVAL_PATH)
+ORIGINAL_SPEC_PATH = os.path.join(params.spectrogram_dir_root, params.spectrogram_full_dir, EVAL_PATH)
+
+class ModelEvaluator:
+    def __init__(self, model: DiffWave, experiment_dir):
+        # init parameters
+        self.model = model
+        self.experiment_dir = experiment_dir
+
+        self.generated_audio_path = os.path.join(params.generated_audio_dir_root, experiment_dir)
+        self.generated_spec_path = os.path.join(params.generated_spectrogram_dir_root, experiment_dir)
+
+        self.original_dataset = SpeechDataset(ORIGINAL_AUDIO_PATH, ORIGINAL_SPEC_PATH)
+        self.original_dataset.prepare_data() # to remove
+
+        self.reduced_spec_file_paths = [os.path.join(self.spectrogram_dir_root, experiment_dir, f) for f in self.original_dataset.spec_filenames]
+        self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
+        self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
+
+        self.audio_generated = False
+        self.spec_generated = False
+
+        self.generate_audio_from_spectrograms()
+        self.generate_spectrograms_from_generated_audio()
+
+        self.mse = None
+
+    def __len__(self):
+        return len(self.original_dataset)
+
+    def evaluate(self):
+        assert self.audio_generated and self.spec_generated, "Audio and spectrograms must be generated before evaluation can be performed"
+        mse = []
+        for i in tqdm(range(len(self)), desc=f"Computing loss {self.experiment_dir}"):
+            generated_spec = np.load(self.generated_spec_file_paths[i])
+            original_spec = np.load(self.original_dataset.spec_file_paths[i])
+            assert generated_spec.shape[0] == original_spec.shape[0], "Spectrograms must have the same number of n_mels"
+            length = min(generated_spec.shape[1], original_spec.shape[1])
+            generated_spec = generated_spec[:, :length]
+            original_spec = original_spec[:, :length]
+            mse.append(np.mean((generated_spec - original_spec)**2))
+        self.mse = np.array(mse)
+        return np.array(mse)
+
+    def generate_audio_from_spectrograms(self):
+        # generate audio from spectrograms
+        for i in tqdm(range(len(self)), desc=f"Generating audio from spectrograms to {self.generated_audio_path}"):
+            
+            spec_path = self.reduced_spec_file_paths[i]
+            audio_path = self.generated_audio_file_paths[i]
+
+            if not os.path.exists(audio_path):
+                spec = np.load(spec_path)
+                audio = self.model.predict_step({"spectrogram": spec})
+                torchaudio.save(audio_path, audio, params.sample_rate)
+        
+        self.audio_generated = True
+
+    def generate_spectrograms_from_generated_audio(self):
+        # generate spectrograms from audio
+        assert self.audio_generated, "Audio must be generated before spectrograms can be generated from audio"
+        
+        prepare_data(
+                    params,
+                    self.generated_audio_file_paths,
+                    self.generated_audio_path,
+                    self.generated_spec_file_paths,
+                    self.generated_spec_path,
+                    )
+        
+        self.spec_generated = True
+            
+
+
+if __name__ == "__main__":
+    
+
+    model1 = DiffWave.load_from_checkpoint("diffwave.ckpt")

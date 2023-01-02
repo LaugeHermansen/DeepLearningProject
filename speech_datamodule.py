@@ -15,6 +15,63 @@ from glob import glob
 from tqdm import tqdm
 from tools import mkdir, Timer
 
+
+def prepare_data(params, audio_file_paths, audio_dir, spec_file_paths, spec_dir):
+    """
+    Preprocess audio files and save them as spectrograms.
+
+    Parameters
+    ----------
+    * params: AttrDict
+    * audio_file_paths: list of str - paths to the audio files
+    * audio_dir: str - directory containing the audio files (only used for printing the progress bar)
+    * spec_file_paths: list of str - paths to the spectrogram files - where the spectrograms will be saved
+    * spec_dir: str - directory containing the spectrogram files (only used for printing the progress bar)
+
+    """
+
+    ingnored_idx = []
+
+    mel_args = {
+            'sample_rate': params.sample_rate,
+            'win_length': params.hop_samples * 4,
+            'hop_length': params.hop_samples,
+            'n_fft': params.n_fft,
+            'f_min': 20.0,
+            'f_max': params.sample_rate / 2.0,
+            'n_mels': params.n_mels,
+            'power': 1.0,
+            'normalized': True,
+    }
+    
+    mel_spec_transform = MelSpectrogram(**mel_args)
+    
+    for i in tqdm(range(len(audio_file_paths)), desc=f'Preprocessing {audio_dir}'):
+        audio_file_path = audio_file_paths[i]
+        spec_file_path = spec_file_paths[i]
+        assert os.path.exists(audio_file_path), f"Audio file not found: {audio_file_path}, {audio_dir}, {spec_dir}"
+        if os.path.exists(spec_file_path):
+            continue
+        
+        audio, sr = torchaudio.load(audio_file_path)
+        audio = torch.clamp(audio[0], -1.0, 1.0)
+
+        if params.sample_rate != sr:
+            raise ValueError(f'Invalid sample rate: {sr} != {params.sample_rate} (True).')
+
+        with torch.no_grad():
+            spectrogram = mel_spec_transform(audio)
+            
+            if spectrogram.shape[1] < params.crop_mel_frames:
+                ingnored_idx.append(i)
+            
+            spectrogram = 20 * torch.log10(torch.clamp(spectrogram, min=1e-5)) - 20
+            spectrogram = torch.clamp((spectrogram + 100) / 100, 0.0, 1.0)
+            np.save(spec_file_path, spectrogram.detach().cpu().numpy())
+
+    return ingnored_idx 
+
+
 class SpeechDataset(Dataset):
     def __init__(self, audio_dir, spec_dir, use_timing=False):
         super().__init__()
@@ -56,61 +113,16 @@ class SpeechDataset(Dataset):
         del self.spec_filenames[idx]
         del self.spec_file_paths[idx]
 
-    def prepare_data(self, params):
-
-        ingnored_idx = []
-
-        mel_args = {
-                'sample_rate': params.sample_rate,
-                'win_length': params.hop_samples * 4,
-                'hop_length': params.hop_samples,
-                'n_fft': params.n_fft,
-                'f_min': 20.0,
-                'f_max': params.sample_rate / 2.0,
-                'n_mels': params.n_mels,
-                'power': 1.0,
-                'normalized': True,
-        }
-        
-        mel_spec_transform = MelSpectrogram(**mel_args)
-        
-        for i in tqdm(range(len(self.audio_file_paths)), desc=f'Preprocessing {self.audio_dir}'):
-            audio_file_path = self.audio_file_paths[i]
-            spec_file_path = self.spec_file_paths[i]
-            assert os.path.exists(audio_file_path), f"Audio file not found: {audio_file_path}, {self.audio_dir}, {self.spec_dir}"
-            if os.path.exists(spec_file_path):
-                continue
-            
-            audio, sr = torchaudio.load(audio_file_path)
-            audio = torch.clamp(audio[0], -1.0, 1.0)
-
-            if params.sample_rate != sr:
-                raise ValueError(f'Invalid sample rate: {sr} != {params.sample_rate} (True).')
-
-            with torch.no_grad():
-                spectrogram = mel_spec_transform(audio)
-                
-                if spectrogram.shape[1] < params.crop_mel_frames:
-                    ingnored_idx.append(i)
-                
-                spectrogram = 20 * torch.log10(torch.clamp(spectrogram, min=1e-5)) - 20
-                spectrogram = torch.clamp((spectrogram + 100) / 100, 0.0, 1.0)
-                np.save(spec_file_path, spectrogram.detach().cpu().numpy())
-
-        for i in reversed(ingnored_idx):
-            self.ignore_item(i)
 
     def __len__(self):
         return len(self.audio_filenames)
     
     def _load_one_item(self, idx):
-        self.timer("_load_one_item()")
         audio_file_path = self.audio_file_paths[idx]
         spec_file_path = self.spec_file_paths[idx]
         signal, _ = torchaudio.load(audio_file_path)
         spectrogram = np.load(spec_file_path).T
         assert signal.shape[0] == 1, f"Only mono audio is supported, found {signal.shape}"
-        self.timer()
         return signal.squeeze(0), spectrogram
 
     def __getitem__(self, idx):
@@ -118,7 +130,12 @@ class SpeechDataset(Dataset):
         return {
             'audio': signal,
             'spectrogram': spectrogram
-        }      
+        }   
+
+    def prepare_data(self, params):
+        ignored_idx = prepare_data(params, self.audio_file_paths, self.audio_dir, self.spec_file_paths, self.spec_dir)
+        for i in ignored_idx:
+            self.ignore_item(i)   
 
 class SpeechDataModule(pl.LightningDataModule):
     def __init__(self, params, use_timing=False):
