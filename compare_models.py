@@ -23,6 +23,7 @@ class ModelEvaluator:
         self.model = model
         self.experiment_dir = experiment_dir
         self.path = os.path.join(params.project_dir_root, params.model_evaluator_results_dir, experiment_dir)
+        os.makedirs(self.path, exist_ok=True)
 
         self.generated_audio_path = os.path.join(params.generated_audio_dir_root, experiment_dir)
         self.generated_spec_path = os.path.join(params.generated_spectrogram_dir_root, experiment_dir)
@@ -33,14 +34,29 @@ class ModelEvaluator:
         self.reduced_spec_file_paths = [os.path.join(self.spectrogram_dir_root, experiment_dir, f) for f in self.original_dataset.spec_filenames]
         self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
         self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
-
+        
+        for f in self.reduced_spec_file_paths:
+            os.makedirs(os.path.dirname(f), exist_ok=True)
+        for f in self.generated_audio_file_paths:
+            os.makedirs(os.path.dirname(f), exist_ok=True)
+        for f in self.generated_spec_file_paths:
+            os.makedirs(os.path.dirname(f), exist_ok=True)
+        
         self.audio_generated = False
         self.spec_generated = False
-
-        self.generate_audio_from_spectrograms()
-        self.generate_spectrograms_from_generated_audio()
-
         self.loss = None
+
+    def __repr__(self):
+        ret = f"ModelEvaluator for {self.path} with {len(self)} samples\n"
+        ret += f"generated_audio_path: {self.generated_audio_path}\n"
+        ret += f"generated_spec_path: {self.generated_spec_path}\n"
+        ret += f"original_dataset_audio[0]: {self.original_dataset.audio_file_paths[0]}\n"
+        ret += f"original_dataset_spec[0]: {self.original_dataset.spec_file_paths[0]}\n"
+        ret += f"reduced_file_paths[0]: {self.reduced_spec_file_paths[0]}\n"
+        ret += f"generated_audio_file_paths[0]: {self.generated_audio_file_paths[0]}\n"
+        ret += f"generated_spec_file_paths[0]: {self.generated_spec_file_paths[0]}\n"
+        return ret
+
 
     def __len__(self):
         return len(self.original_dataset)
@@ -103,12 +119,13 @@ if __name__ == "__main__":
     paths = ["models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",
              "models_for_comparison/time-epoch=209-val_loss=0.041662.ckpt",]
     
-    exp_names = ["epoch 53", "epoch 209"]
+    exp_names = ["epoch_53", "epoch_209"]
 
     models = [DiffWave.load_from_checkpoint(path) for path in paths]
 
     model_evaluators = [ModelEvaluator(model, exp_name) for model, exp_name in zip(models, exp_names)]
 
     for evaluator in model_evaluators:
-        evaluator.evaluate(overwrite=False)
-        
+        print(evaluator)
+        # evaluator.evaluate(overwrite=False)
+
