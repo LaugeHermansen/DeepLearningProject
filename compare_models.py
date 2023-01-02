@@ -13,7 +13,7 @@ import torchaudio
 
 EVAL_PATH = params.val_dir
 
-
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ORIGINAL_AUDIO_PATH = os.path.join(params.data_dir_root, EVAL_PATH)
 ORIGINAL_SPEC_PATH = os.path.join(params.spectrogram_dir_root, params.spectrogram_full_dir, EVAL_PATH)
 
@@ -36,10 +36,10 @@ class ModelEvaluator:
         self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
         self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
         
-        #for f in self.generated_audio_file_paths:
-        #    os.makedirs(os.path.dirname(f), exist_ok=True)
-        #for f in self.generated_spec_file_paths:
-        #    os.makedirs(os.path.dirname(f), exist_ok=True)
+        for f in self.generated_audio_file_paths:
+            os.makedirs(os.path.dirname(f), exist_ok=True)
+        for f in self.generated_spec_file_paths:
+            os.makedirs(os.path.dirname(f), exist_ok=True)
         
         self.audio_generated = False
         self.spec_generated = False
@@ -99,7 +99,8 @@ class ModelEvaluator:
 
             if not os.path.exists(audio_path):
                 spec = np.load(spec_path)
-                audio = self.model.predict_step({"spectrogram": spec})
+                spec = torch.from_numpy(spec).to(DEVICE)
+                audio = self.model.predict_step({"spectrogram": spec}, None)
                 torchaudio.save(audio_path, audio, params.sample_rate)
         
         self.audio_generated = True
@@ -128,11 +129,11 @@ if __name__ == "__main__":
     
     exp_names = ["epoch_53", "epoch_209"]
 
-    models = [DiffWave.load_from_checkpoint(path) for path in paths]
+    models = [DiffWave.load_from_checkpoint(path, map_location=DEVICE).to(DEVICE) for path in paths]
 
     model_evaluators = [ModelEvaluator(model, exp_name, 'full') for model, exp_name in zip(models, exp_names)]
 
     for evaluator in model_evaluators:
         print(evaluator)
-        # evaluator.evaluate(overwrite=False)
+        evaluator.evaluate(overwrite=False)
 
