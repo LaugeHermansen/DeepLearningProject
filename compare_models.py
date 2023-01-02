@@ -10,6 +10,8 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import torchaudio
+import multiprocessing as mp
+
 
 EVAL_PATH = params.val_dir
 
@@ -92,16 +94,31 @@ class ModelEvaluator:
 
     def generate_audio_from_spectrograms(self):
         # generate audio from spectrograms
-        for i in tqdm(range(len(self)), desc=f"Generating audio from spectrograms to {self.generated_audio_path}"):
-            
-            spec_path = self.reduced_spec_file_paths[i]
-            audio_path = self.generated_audio_file_paths[i]
+        def generate(spec_paths, audio_paths, sample_rate, model, device, verbose=False):
+            if verbose: iterator = tqdm(range(len(spec_paths)), desc=f"Generating audio from spectrograms {self.experiment_dir}")
+            else: iterator = range(len(spec_paths))
+            for i in iterator:
+                spec_path = spec_paths[i]
+                audio_path = audio_paths[i]
+                if not os.path.exists(audio_path):
+                    spec = np.load(spec_path)
+                    spec = torch.from_numpy(spec).to(device)
+                    audio = model.predict_step({"spectrogram": spec}, None)
+                    torchaudio.save(audio_path, audio, sample_rate)
+        
+        n_cpus = os.cpu_count()
+        batch_size = np.ceil(len(self) // n_cpus).astype(int)
+        processes = []
+        for i in range(n_cpus):
+            spec_paths = self.reduced_spec_file_paths[i*batch_size:(i+1)*batch_size]
+            audio_paths = self.generated_audio_file_paths[i*batch_size:(i+1)*batch_size]
+            p = mp.Process(target=generate, args=(spec_paths[i], audio_paths[i], self.sample_rate, self.model, DEVICE, i==0))
+            p.start()
+            processes.append(p)
+        for p in processes:
+            p.join()
+        
 
-            if not os.path.exists(audio_path):
-                spec = np.load(spec_path)
-                spec = torch.from_numpy(spec).to(DEVICE)
-                audio = self.model.predict_step({"spectrogram": spec}, None)
-                torchaudio.save(audio_path, audio, params.sample_rate)
         
         self.audio_generated = True
 
@@ -136,4 +153,36 @@ if __name__ == "__main__":
     for evaluator in model_evaluators:
         print(evaluator)
         evaluator.evaluate(overwrite=False)
+
+#%%
+
+
+import multiprocessing as mp
+import os
+import time
+from tools import Timer
+
+def tester(i):
+    time.sleep(10)
+    return i**2
+
+
+timer = Timer()
+
+timer("processes")
+
+processes = []
+for i in range(8):
+    print(f"Starting process {i}")
+    p = mp.Process(target=tester, args=(i,))
+    p.start()
+    processes.append(p)
+
+for p in processes:
+    print(p.join())
+
+timer()
+
+print("All processes finished")
+print(timer.evaluate())
 
