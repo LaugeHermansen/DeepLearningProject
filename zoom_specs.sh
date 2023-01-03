@@ -1,8 +1,8 @@
 #!/bin/sh
 #BSUB -J zoom_specs
 #BSUB -R "rusage[mem=20GB]"
-#BSUB -q gpua100
-#BSUB -gpu "num=1:mode=exclusive_process"
+###BSUB -q gpua100
+###BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 4
 #BSUB -R "span[hosts=1]" 
 #BSUB -o zoom_specs_%J.out

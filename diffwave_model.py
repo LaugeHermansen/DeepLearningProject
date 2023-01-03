@@ -40,9 +40,6 @@ class DiffusionEmbedding(nn.Module):
         high_idx = torch.ceil(t).long()
         low = self.embedding[low_idx]
         high = self.embedding[high_idx]
-        
-        raise ValueError(f"{low_idx.device}, {high_idx.device}, {low.device}, {high.device}, {t.device}")
-        
         return low + (high - low) * (t - low_idx)
 
     def _build_embedding(self, max_steps):
@@ -228,7 +225,7 @@ class DiffWave(pl.LightningModule):
                         twiddle = (talpha_cum[t]**0.5 - alpha_cum[s]**0.5) / (talpha_cum[t]**0.5 - talpha_cum[t+1]**0.5)
                         T.append(t + twiddle)
                         break
-            T = torch.tensor(T, dtype=torch.float).unsqueeze(1) # to tensor and create batch dim
+            T = torch.tensor(T, dtype=torch.float).unsqueeze(1).to(device) # to tensor and create batch dim
 
 
             if len(spectrogram.shape) == 2: # Expand rank 2 tensors by adding a batch dimension.

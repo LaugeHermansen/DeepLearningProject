@@ -1,6 +1,6 @@
 #!/bin/sh
 #BSUB -J experiment
-#BSUB -R "rusage[mem=20GB]"
+#BSUB -R "rusage[mem=4GB]"
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 4
