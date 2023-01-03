@@ -40,6 +40,9 @@ class DiffusionEmbedding(nn.Module):
         high_idx = torch.ceil(t).long()
         low = self.embedding[low_idx]
         high = self.embedding[high_idx]
+        
+        raise ValueError(f"{low_idx.device}, {high_idx.device}, {low.device}, {high.device}, {t.device}")
+        
         return low + (high - low) * (t - low_idx)
 
     def _build_embedding(self, max_steps):

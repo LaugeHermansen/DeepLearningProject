@@ -1,13 +1,13 @@
 #!/bin/sh
 #BSUB -J compare_models
 #BSUB -R "rusage[mem=4GB]"
-#BSUB -q gpuv100
+#BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 4
 #BSUB -R "span[hosts=1]" 
 #BSUB -o compare_models_%J.out
 #BSUB -e compare_models_%J.err
-#BSUB -W 24:00
+#BSUB -W 0:10
 # -- end of LSF options --
 
 source diffwave/bin/activate

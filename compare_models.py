@@ -113,13 +113,13 @@ class ModelEvaluator:
             for i in range(n_cpus):
                 spec_paths = self.reduced_spec_file_paths[i*batch_size:(i+1)*batch_size]
                 audio_paths = self.generated_audio_file_paths[i*batch_size:(i+1)*batch_size]
-                p = mp.Process(target=generate, args=(spec_paths[i], audio_paths[i], self.sample_rate, self.model, DEVICE, i==0))
+                p = mp.Process(target=generate, args=(spec_paths[i], audio_paths[i], params.sample_rate, self.model, DEVICE, i==0))
                 p.start()
                 processes.append(p)
             for p in processes:
                 p.join()
         else:
-            generate(self.reduced_spec_file_paths, self.generated_audio_file_paths, self.sample_rate, self.model, DEVICE, verbose=True)
+            generate(self.reduced_spec_file_paths, self.generated_audio_file_paths, params.sample_rate, self.model, DEVICE, verbose=True)
         
 
         
@@ -155,37 +155,4 @@ if __name__ == "__main__":
 
     for evaluator in model_evaluators:
         print(evaluator)
-        evaluator.evaluate(overwrite=False)
-
-#%%
-
-
-import multiprocessing as mp
-import os
-import time
-from tools import Timer
-
-def tester(i):
-    time.sleep(10)
-    return i**2
-
-
-timer = Timer()
-
-timer("processes")
-
-processes = []
-for i in range(8):
-    print(f"Starting process {i}")
-    p = mp.Process(target=tester, args=(i,))
-    p.start()
-    processes.append(p)
-
-for p in processes:
-    print(p.join())
-
-timer()
-
-print("All processes finished")
-print(timer.evaluate())
-
+        evaluator.evaluate(overwrite=False, parallel=False)
