@@ -3,7 +3,7 @@
 #BSUB -R "rusage[mem=4GB]"
 #BSUB -q gpua100
 #BSUB -gpu "num=1:mode=exclusive_process"
-#BSUB -n 4
+#BSUB -n 2
 #BSUB -R "span[hosts=1]" 
 #BSUB -o compare_models_%J.out
 #BSUB -e compare_models_%J.err

@@ -20,10 +20,15 @@ ORIGINAL_AUDIO_PATH = os.path.join(params.data_dir_root, EVAL_PATH)
 ORIGINAL_SPEC_PATH = os.path.join(params.spectrogram_dir_root, params.spectrogram_full_dir, EVAL_PATH)
 
 class ModelEvaluator:
-    def __init__(self, model: DiffWave, experiment_dir, spectrogram_dir=None):
+    def __init__(self, model: DiffWave, experiment_dir, spectrogram_dir=None, downscale=1.0):
         # init parameters
         self.model = model
         self.experiment_dir = experiment_dir
+        self.downscale = downscale
+
+        self.start = 256
+        self.end = 256 + 64
+
         self.spectrogram_dir = spectrogram_dir if spectrogram_dir is not None else experiment_dir
         self.path = os.path.join(params.project_dir_root, params.model_evaluator_results_dir, experiment_dir)
         os.makedirs(self.path, exist_ok=True)
@@ -84,6 +89,7 @@ class ModelEvaluator:
             for i in tqdm(range(len(self)), desc=f"Computing loss {self.experiment_dir}"):
                 generated_spec = np.load(self.generated_spec_file_paths[i])
                 original_spec = np.load(self.original_dataset.spec_file_paths[i])
+                original_spec = original_spec[:, self.start:self.end]
                 assert generated_spec.shape[0] == original_spec.shape[0], "Spectrograms must have the same number of n_mels"
                 length = min(generated_spec.shape[1], original_spec.shape[1])
                 generated_spec = generated_spec[:, :length]
@@ -94,35 +100,16 @@ class ModelEvaluator:
 
     def generate_audio_from_spectrograms(self, parallel=False):
         # generate audio from spectrograms
-        def generate(spec_paths, audio_paths, sample_rate, model, device, verbose=False):
-            if verbose: iterator = tqdm(range(len(spec_paths)), desc=f"Generating audio from spectrograms {self.experiment_dir}")
-            else: iterator = range(len(spec_paths))
-            for i in iterator:
-                spec_path = spec_paths[i]
-                audio_path = audio_paths[i]
-                if not os.path.exists(audio_path):
-                    spec = np.load(spec_path)
-                    spec = torch.from_numpy(spec).to(device)
-                    audio = model.predict_step({"spectrogram": spec}, None)
-                    torchaudio.save(audio_path, audio, sample_rate)
-        
-        if parallel:
-            n_cpus = os.cpu_count()
-            batch_size = np.ceil(len(self) // n_cpus).astype(int)
-            processes = []
-            for i in range(n_cpus):
-                spec_paths = self.reduced_spec_file_paths[i*batch_size:(i+1)*batch_size]
-                audio_paths = self.generated_audio_file_paths[i*batch_size:(i+1)*batch_size]
-                p = mp.Process(target=generate, args=(spec_paths[i], audio_paths[i], params.sample_rate, self.model, DEVICE, i==0))
-                p.start()
-                processes.append(p)
-            for p in processes:
-                p.join()
-        else:
-            generate(self.reduced_spec_file_paths, self.generated_audio_file_paths, params.sample_rate, self.model, DEVICE, verbose=True)
-        
+        for i in tqdm(range(len(self.reduced_spec_file_paths)), desc=f"Generating audio from spectrograms {self.experiment_dir}"):
+            spec_path = self.reduced_spec_file_paths[i]
+            audio_path = self.generated_audio_file_paths[i]
+            if not os.path.exists(audio_path):
 
-        
+                spec = np.load(spec_path)[:, int(self.start*self.downscale):int(self.end*self.downscale)]
+                spec = torch.from_numpy(spec).to(DEVICE)
+                audio = self.model.predict_step({"spectrogram": spec}, None)
+                torchaudio.save(audio_path, audio, params.sample_rate)
+    
         self.audio_generated = True
 
     def generate_spectrograms_from_generated_audio(self):
@@ -145,13 +132,15 @@ if __name__ == "__main__":
     
 
     paths = ["models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",
-             "models_for_comparison/time-epoch=209-val_loss=0.041662.ckpt",]
+             "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",]
     
-    exp_names = ["epoch_53", "epoch_209"]
+    exp_names = ["full", "0.5"]
+
+    spec_dirs = ["full", "0.5"]
 
     models = [DiffWave.load_from_checkpoint(path, map_location=DEVICE).to(DEVICE) for path in paths]
 
-    model_evaluators = [ModelEvaluator(model, exp_name, 'full') for model, exp_name in zip(models, exp_names)]
+    model_evaluators = [ModelEvaluator(model, exp_name, spec_dir) for model, exp_name, spec_dir in zip(models, exp_names, spec_dirs)]
 
     for evaluator in model_evaluators:
         print(evaluator)
