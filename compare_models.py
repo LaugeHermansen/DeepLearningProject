@@ -43,9 +43,9 @@ class ModelEvaluator:
         rng = np.random.default_rng(seed=42)
         self.idx = rng.choice(len(self.original_dataset), self.n_samples, replace=False)
 
-        self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, self.spectrogram_dir, EVAL_PATH, f) for f in self.original_dataset.spec_filenames]
-        self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
-        self.generated_spec_file_paths = [os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames]
+        self.reduced_spec_file_paths = np.array([os.path.join(params.spectrogram_dir_root, self.spectrogram_dir, EVAL_PATH, f) for f in self.original_dataset.spec_filenames])
+        self.generated_audio_file_paths = np.array([os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames])
+        self.generated_spec_file_paths = np.array([os.path.join(self.generated_spec_path, f) for f in self.original_dataset.spec_filenames])
         
         for f in self.generated_audio_file_paths:
             os.makedirs(os.path.dirname(f), exist_ok=True)
@@ -136,9 +136,10 @@ if __name__ == "__main__":
     
 
     paths = ["models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",
-             "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",]
+             "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",
+             "models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",]
     
-    exp_names = ["full", "0.5"]
+    exp_names = ["full", "0.5", "0.5_orig_model"]
 
     spec_dirs = ["full", "0.5"]
 
