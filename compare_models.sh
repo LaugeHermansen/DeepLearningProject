@@ -7,7 +7,7 @@
 #BSUB -R "span[hosts=1]" 
 #BSUB -o compare_models_%J.out
 #BSUB -e compare_models_%J.err
-#BSUB -W 0:10
+#BSUB -W 10:00
 # -- end of LSF options --
 
 source diffwave/bin/activate
