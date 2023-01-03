@@ -137,11 +137,12 @@ if __name__ == "__main__":
 
     paths = ["models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",
              "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",
+             "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",
              "models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",]
     
-    exp_names = ["full", "0.5", "0.5_orig_model"]
+    exp_names = ["full", "0.5", "full_reduced_model", "0.5_orig_model"]
 
-    spec_dirs = ["full", "0.5"]
+    spec_dirs = ["full", "0.5", "full", "0.5"]
 
     models = [DiffWave.load_from_checkpoint(path, map_location=DEVICE).to(DEVICE) for path in paths]
 
