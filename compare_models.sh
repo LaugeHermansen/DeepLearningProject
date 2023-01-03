@@ -1,8 +1,8 @@
 #!/bin/sh
-#BSUB -J compare_models
+#BSUB -J comp_models
 #BSUB -R "rusage[mem=4GB]"
-#BSUB -q gpua100
-#BSUB -gpu "num=1:mode=exclusive_process"
+###BSUB -q gpua100
+###BSUB -gpu "num=1:mode=exclusive_process"
 #BSUB -n 2
 #BSUB -R "span[hosts=1]" 
 #BSUB -o compare_models_%J.out

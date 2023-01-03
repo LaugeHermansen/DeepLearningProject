@@ -20,11 +20,12 @@ ORIGINAL_AUDIO_PATH = os.path.join(params.data_dir_root, EVAL_PATH)
 ORIGINAL_SPEC_PATH = os.path.join(params.spectrogram_dir_root, params.spectrogram_full_dir, EVAL_PATH)
 
 class ModelEvaluator:
-    def __init__(self, model: DiffWave, experiment_dir, spectrogram_dir=None, downscale=1.0):
+    def __init__(self, model: DiffWave, experiment_dir, spectrogram_dir=None, n_samples=100, downscale=1.0):
         # init parameters
         self.model = model
         self.experiment_dir = experiment_dir
         self.downscale = downscale
+        self.n_samples = n_samples
 
         self.start = 256
         self.end = 256 + 64
@@ -38,6 +39,9 @@ class ModelEvaluator:
 
         self.original_dataset = SpeechDataset(ORIGINAL_AUDIO_PATH, ORIGINAL_SPEC_PATH)
         self.original_dataset.prepare_data(params) # to remove
+        
+        rng = np.random.default_rng(seed=42)
+        self.idx = rng.choice(len(self.original_dataset), self.n_samples, replace=False)
 
         self.reduced_spec_file_paths = [os.path.join(params.spectrogram_dir_root, self.spectrogram_dir, EVAL_PATH, f) for f in self.original_dataset.spec_filenames]
         self.generated_audio_file_paths = [os.path.join(self.generated_audio_path, f) for f in self.original_dataset.audio_filenames]
@@ -86,7 +90,7 @@ class ModelEvaluator:
             self.loss = np.load(os.path.join(self.path, "loss.npy"))
         else:
             loss = []
-            for i in tqdm(range(len(self)), desc=f"Computing loss {self.experiment_dir}"):
+            for i in tqdm(self.idx, desc=f"Computing loss {self.experiment_dir}"):
                 generated_spec = np.load(self.generated_spec_file_paths[i])
                 original_spec = np.load(self.original_dataset.spec_file_paths[i])
                 original_spec = original_spec[:, self.start:self.end]
@@ -100,7 +104,7 @@ class ModelEvaluator:
 
     def generate_audio_from_spectrograms(self, parallel=False):
         # generate audio from spectrograms
-        for i in tqdm(range(len(self.reduced_spec_file_paths)), desc=f"Generating audio from spectrograms {self.experiment_dir}"):
+        for i in tqdm(self.idx, desc=f"Generating audio from spectrograms {self.experiment_dir}"):
             spec_path = self.reduced_spec_file_paths[i]
             audio_path = self.generated_audio_file_paths[i]
             if not os.path.exists(audio_path):
@@ -118,9 +122,9 @@ class ModelEvaluator:
         
         prepare_data(
                     params,
-                    self.generated_audio_file_paths,
+                    self.generated_audio_file_paths[self.idx],
                     self.generated_audio_path,
-                    self.generated_spec_file_paths,
+                    self.generated_spec_file_paths[self.idx],
                     self.generated_spec_path,
                     )
         
