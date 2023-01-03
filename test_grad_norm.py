@@ -10,14 +10,21 @@ experiments = [
     # (experiment_name, version, end_epoch, offset)
     # ("from_bottom_v3_42", "version_1"),
     # ("from_bottom_v3_42", "version_2"),
+
     # ("from_bottom_v8_42", "version_0", 239, 0),
     # ("from_bottom_v8_42", "version_1", 404, 0),
     # ("from_bottom_v8_42", "version_2", None, 0),
-    ("from_bottom_v8_2_42", "version_0", 239, 0),
-    ("from_bottom_v8_2_42", "version_1", 404, 0),
-    ("from_bottom_v8_2_42", "version_2", 479, 0),
-    ("from_bottom_v8_2_42", "version_5", None, 480),
+
+    # ("from_bottom_v8_2_42", "version_0", 239, 0),
+    # ("from_bottom_v8_2_42", "version_1", 404, 0),
+    # ("from_bottom_v8_2_42", "version_2", 479, 0),
+    # ("from_bottom_v8_2_42", "version_5", None, 480),
+
+    ("zoom_0_5_42", "version_0", None, 0),
     ]
+
+hist_split_epoch = []
+
 
 versions = {}
 for exp in experiments:
@@ -86,22 +93,22 @@ ax.legend()
 step_data = data[['step', 'epoch', 'grad_2_norm_step']].dropna()
 ax = fig.add_subplot(2,2,3)
 ax.set_title('Gradient norm step distribution')
+
 step_data_split = []
 
-if False:
-    n_splits = 4
-    split_idx = int(len(step_data)/n_splits)+1
-    for i in range(n_splits):
-        # ax = fig.add_subplot(2,n_splits*2,n_splits*2+i+1)
-        step_data_split.append(step_data.iloc[i*split_idx:(i+1)*split_idx])
+    # n_splits = 4
+    # split_idx = int(len(step_data)/n_splits)+1
+    # for i in range(n_splits):
+    #     # ax = fig.add_subplot(2,n_splits*2,n_splits*2+i+1)
+    #     step_data_split.append(step_data.iloc[i*split_idx:(i+1)*split_idx])
 
-else:
-    split_epoch = [320]
-    split_epoch = [step_data.iloc[0]['epoch']] + split_epoch
-    split_epoch.append(step_data.iloc[-1]['epoch']+1)
 
-    for i in range(len(split_epoch)-1):
-        step_data_split.append(step_data[(step_data['epoch'] >= split_epoch[i]) & (step_data['epoch'] < split_epoch[i+1])])
+split_epoch = hist_split_epoch
+split_epoch = [step_data.iloc[0]['epoch']] + split_epoch
+split_epoch.append(step_data.iloc[-1]['epoch']+1)
+
+for i in range(len(split_epoch)-1):
+    step_data_split.append(step_data[(step_data['epoch'] >= split_epoch[i]) & (step_data['epoch'] < split_epoch[i+1])])
 
 for i in range(len(step_data_split)):
     ax.hist(step_data_split[i]['grad_2_norm_step'], bins=100, density=True, alpha = 0.4, label=f'Epochs {step_data_split[i].iloc[0]["epoch"]:.0f} to {step_data_split[i].iloc[-1]["epoch"]:.0f}')
