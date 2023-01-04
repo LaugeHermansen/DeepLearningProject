@@ -179,7 +179,7 @@ if __name__ == "__main__":
             model.spectrogram_upsampler = spec_ups
 
         # get the evaluator
-        evaluator = ModelEvaluator(model, exp_name, spec_dir, 10, downscale=downscale)
+        evaluator = ModelEvaluator(model, exp_name, spec_dir, 100, downscale=downscale)
         #model, experiment_dir, spectrogram_dir, n_samples, downscale
         evaluator.evaluate(overwrite=False, parallel=False)
 
