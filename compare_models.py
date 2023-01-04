@@ -30,9 +30,9 @@ class ModelEvaluator:
         self.experiment_dir = experiment_dir
         self.downscale = downscale
         self.n_samples = n_samples
-
-        self.start = 64
-        self.end = 64 + 64
+  
+        self.start = 128
+        self.end = 128 + 64
 
         self.spectrogram_dir = spectrogram_dir if spectrogram_dir is not None else experiment_dir
         self.path = os.path.join(params.project_dir_root, params.model_evaluator_results_dir, experiment_dir)
@@ -108,9 +108,9 @@ class ModelEvaluator:
 
     def generate_audio_from_spectrograms(self, parallel=False):
         # generate audio from spectrograms
-        start, end = int(self.start*self.downscale), int(self.end*self.downscale)
+        (start, end) = (int(self.start*self.downscale), int(self.end*self.downscale)) if self.downscale is not None else (self.start, self.end)
 
-        for i in tqdm(self.idx, desc=f"Generating audio of length from spectrograms of length {end-start} from {self.experiment_dir}"):
+        for i in tqdm(self.idx, desc=f"Generating audio from spectrograms of length {end-start} from {self.experiment_dir}"):
             spec_path = self.reduced_spec_file_paths[i]
             audio_path = self.generated_audio_file_paths[i]
             if not os.path.exists(audio_path):
@@ -179,7 +179,8 @@ if __name__ == "__main__":
             model.spectrogram_upsampler = spec_ups
 
         # get the evaluator
-        evaluator = ModelEvaluator(model, exp_name, spec_dir, 10)
+        evaluator = ModelEvaluator(model, exp_name, spec_dir, 10, downscale=downscale)
+        #model, experiment_dir, spectrogram_dir, n_samples, downscale
         evaluator.evaluate(overwrite=False, parallel=False)
 
 
