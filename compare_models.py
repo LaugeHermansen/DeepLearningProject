@@ -1,7 +1,7 @@
 #%%
 
 
-from params import params
+from params import params, base_params, AttrDict
 from upsampler_data_module import UpsamplerDataModule, UpsamplerDataset
 from speech_datamodule import SpeechDataModule, SpeechDataset, prepare_data
 import os
@@ -11,6 +11,10 @@ import numpy as np
 import torch
 import torchaudio
 import multiprocessing as mp
+
+from Upsampler_data.create_data import SpectrogramUpsampler
+from diffwave_model import DiffWave
+
 
 
 EVAL_PATH = params.val_dir
@@ -104,14 +108,17 @@ class ModelEvaluator:
 
     def generate_audio_from_spectrograms(self, parallel=False):
         # generate audio from spectrograms
-        for i in tqdm(self.idx, desc=f"Generating audio from spectrograms {self.experiment_dir}"):
+        start, end = int(self.start*self.downscale), int(self.end*self.downscale)
+
+        for i in tqdm(self.idx, desc=f"Generating audio of length from spectrograms of length {end-start} from {self.experiment_dir}"):
             spec_path = self.reduced_spec_file_paths[i]
             audio_path = self.generated_audio_file_paths[i]
             if not os.path.exists(audio_path):
 
-                spec = np.load(spec_path)[:, int(self.start*self.downscale):int(self.end*self.downscale)]
+                spec = np.load(spec_path)[:, start:end]
                 spec = torch.from_numpy(spec).to(DEVICE)
                 audio = self.model.predict_step({"spectrogram": spec}, None)
+                print(audio.shape)
                 torchaudio.save(audio_path, audio, params.sample_rate)
     
         self.audio_generated = True
@@ -135,19 +142,44 @@ class ModelEvaluator:
 if __name__ == "__main__":
     
 
-    paths = ["models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",
-             "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",
-             "models_for_comparison/k-epoch=31-val_loss=0.043005_zoom_0_5.ckpt",
-             "models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt",]
+    downscales = [None, 0.5, 0.25]
+
+    model_path = "models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt"
     
-    exp_names = ["full", "0.5", "full_reduced_model", "0.5_orig_model"]
+    upsampler_paths = [
+                       None,
+                       "Upsampler_data/upsamplers/0.5/best-epoch=1-val_loss=0.000007.ckpt",
+                       "Upsampler_data/upsamplers/0.25/best-epoch=1-val_loss=0.000004.ckpt",
+    ]
+    
+    exp_names = [f"downscale_{downscale}" if downscale is not None else params.spectrogram_full_dir for downscale in downscales]
+    spec_dirs = exp_names
 
-    spec_dirs = ["full", "0.5", "full", "0.5"]
+    models = []
+    model_evaluators = []
 
-    models = [DiffWave.load_from_checkpoint(path, map_location=DEVICE).to(DEVICE) for path in paths]
+    for downscale, upsampler_path, exp_name, spec_dir in zip(downscales, upsampler_paths, exp_names, spec_dirs):
 
-    model_evaluators = [ModelEvaluator(model, exp_name, spec_dir) for model, exp_name, spec_dir in zip(models, exp_names, spec_dirs)]
+        base_params["downscale"] = downscale
+        base_params["spectrogram_dir"] = f'downscale_{downscale}' if downscale is not None else base_params["spectrogram_full_dir"]
+        temp_params = AttrDict(base_params)
 
-    for evaluator in model_evaluators:
-        print(evaluator)
+        # generate the spectrograms
+        dm = SpeechDataModule(temp_params)
+        dm.setup('test')
+
+        # get the model
+        ckpt = torch.load(model_path, map_location=DEVICE)
+        model = DiffWave(temp_params)
+        model.load_state_dict(ckpt['state_dict'])
+
+        # get the upsampler
+        if downscale is not None:
+            spec_ups = SpectrogramUpsampler.load_from_checkpoint(upsampler_path).to(DEVICE)
+            model.spectrogram_upsampler = spec_ups
+
+        # get the evaluator
+        evaluator = ModelEvaluator(model, exp_name, spec_dir, 200)
         evaluator.evaluate(overwrite=False, parallel=False)
+
+

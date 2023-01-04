@@ -69,6 +69,7 @@ base_params = dict(
     accelerator = 'gpu',
     gradient_clip_val = 0,
     checkpoint_name = None,
+    downscale = None
 )
 
 

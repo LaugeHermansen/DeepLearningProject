@@ -15,12 +15,12 @@ experiments = [
     # ("from_bottom_v8_42", "version_1", 404, 0),
     # ("from_bottom_v8_42", "version_2", None, 0),
 
-    # ("from_bottom_v8_2_42", "version_0", 239, 0),
-    # ("from_bottom_v8_2_42", "version_1", 404, 0),
-    # ("from_bottom_v8_2_42", "version_2", 479, 0),
-    # ("from_bottom_v8_2_42", "version_5", None, 480),
+    ("from_bottom_v8_2_42", "version_0", 239, 0),
+    ("from_bottom_v8_2_42", "version_1", 404, 0),
+    ("from_bottom_v8_2_42", "version_2", 479, 0),
+    ("from_bottom_v8_2_42", "version_5", None, 480),
 
-    ("zoom_0_5_42", "version_0", None, 0),
+    # ("zoom_0_5_42", "version_0", None, 0),
     ]
 
 hist_split_epoch = []
@@ -57,8 +57,9 @@ data = pd.concat(data, axis=0)
 start_step = 0
 start_epoch = 0
 
+scale = 3/4
 
-fig = plt.figure(figsize=(10,5))
+fig = plt.figure(figsize=(10*scale,5*scale))
 
 
 ax = fig.add_subplot(2,2,1)
@@ -74,6 +75,8 @@ ax.set_ylabel('Gradient $L2$-norm')
 
 ax = fig.add_subplot(1,2,2)
 
+# add vertical line at 480+53
+ax.axvline(x=480+53, color='r', linestyle='--', label='epoch 533')
 
 # ax = fig.add_subplot(2,2,4)
 epoch_data = data[['epoch','val_loss_epoch']].dropna()
@@ -125,5 +128,7 @@ ax.legend()
 
 
 fig.tight_layout()
+
+fig.savefig("poster_report/from_bottom_v8_2_42.png", dpi=300)
 
 plt.show()

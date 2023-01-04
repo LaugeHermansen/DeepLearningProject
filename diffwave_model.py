@@ -231,7 +231,8 @@ class DiffWave(pl.LightningModule):
             if len(spectrogram.shape) == 2: # Expand rank 2 tensors by adding a batch dimension.
                 spectrogram = spectrogram.unsqueeze(0)
             spectrogram = spectrogram.to(device)
-            audio = torch.randn(spectrogram.shape[0], self.params.hop_samples * spectrogram.shape[-1], device=device)
+            downscale = self.params.downscale if self.params.downscale is not None else 1
+            audio = torch.randn(spectrogram.shape[0], int(self.params.hop_samples * spectrogram.shape[-1] / downscale), device=device)
             
             # noise_scale = torch.from_numpy(alpha_cum**0.5).float().unsqueeze(1).to(device)
             

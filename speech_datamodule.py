@@ -13,7 +13,7 @@ import pytorch_lightning as pl
 from math import floor
 from glob import glob
 from tqdm import tqdm
-from tools import mkdir, Timer
+from tools import mkdir, Timer, AttrDict
 
 
 def prepare_data(params, audio_file_paths, audio_dir, spec_file_paths, spec_dir):
@@ -43,6 +43,15 @@ def prepare_data(params, audio_file_paths, audio_dir, spec_file_paths, spec_dir)
             'power': 1.0,
             'normalized': True,
     }
+
+    downscale = params.get("downscale", None)
+
+    if downscale is not None:
+        mel_args['win_length'] = int(mel_args['win_length'] / downscale)
+        mel_args['hop_length'] = int(mel_args['hop_length'] / downscale)
+        mel_args['n_fft'] = int(mel_args['n_fft'] / downscale)
+        mel_args['n_mels'] = int(mel_args['n_mels'] * downscale)
+
     
     mel_spec_transform = MelSpectrogram(**mel_args)
     
@@ -218,3 +227,9 @@ class SpeechDataModule(pl.LightningDataModule):
 
     def test_dataloader(self):
         return DataLoader((self.test_set), shuffle=False, **self.loader_kwargs(self.test_set))
+
+
+if __name__ == "__main__":
+    pass
+#%%
+
