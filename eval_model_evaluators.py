@@ -12,7 +12,7 @@ results = [np.load(p) for p in result_paths]
 
 for result, experiment_name in zip(results, experiment_names):
     print(experiment_name)
-    print(f"{result.mean():.4f} +- {1.96*result.std():.4f}")
+    print(f"{result.mean():.10f} +- {1.96*result.std():.10f}")
     print()
 
 
