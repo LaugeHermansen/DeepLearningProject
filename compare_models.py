@@ -17,7 +17,7 @@ from diffwave_model import DiffWave
 
 
 
-EVAL_PATH = params.val_dir
+EVAL_PATH = params.test_dir
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ORIGINAL_AUDIO_PATH = os.path.join(params.data_dir_root, EVAL_PATH)
