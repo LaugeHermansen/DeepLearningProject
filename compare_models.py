@@ -142,7 +142,7 @@ class ModelEvaluator:
 if __name__ == "__main__":
     
 
-    downscales = [None, 0.5, 0.25]
+    downscales = [None, 0.5, 0.25, 0.25]
 
     model_path = "models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt"
     
@@ -150,10 +150,12 @@ if __name__ == "__main__":
                        None,
                        "Upsampler_data/upsamplers/0.5/best-epoch=1-val_loss=0.000007.ckpt",
                        "Upsampler_data/upsamplers/0.25/best-epoch=1-val_loss=0.000004.ckpt",
+                       None
     ]
     
     exp_names = [f"downscale_{downscale}" if downscale is not None else params.spectrogram_full_dir for downscale in downscales]
-    spec_dirs = exp_names
+    exp_names[-1] += "_untrained"
+    spec_dirs = exp_names[:-1] + [exp_names[-2]]
 
     models = []
     model_evaluators = []
@@ -175,7 +177,10 @@ if __name__ == "__main__":
 
         # get the upsampler
         if downscale is not None:
-            spec_ups = SpectrogramUpsampler.load_from_checkpoint(upsampler_path).to(DEVICE)
+            
+            if "untrained" in exp_name: spec_ups = SpectrogramUpsampler(None, downscale, temp_params).to(DEVICE)
+            else: spec_ups = SpectrogramUpsampler.load_from_checkpoint(upsampler_path).to(DEVICE)
+            
             model.spectrogram_upsampler = spec_ups
 
         # get the evaluator
