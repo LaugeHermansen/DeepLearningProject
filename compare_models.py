@@ -31,8 +31,8 @@ class ModelEvaluator:
         self.downscale = downscale
         self.n_samples = n_samples
 
-        self.start = 256
-        self.end = 256 + 64
+        self.start = 64
+        self.end = 64 + 64
 
         self.spectrogram_dir = spectrogram_dir if spectrogram_dir is not None else experiment_dir
         self.path = os.path.join(params.project_dir_root, params.model_evaluator_results_dir, experiment_dir)
