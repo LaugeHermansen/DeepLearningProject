@@ -230,6 +230,64 @@ class SpeechDataModule(pl.LightningDataModule):
 
 
 if __name__ == "__main__":
-    pass
+
 #%%
+
+    from params import base_params
+
+    # for downscale in [0.5, 0.25]:
+    #     params.downscale = downscale
+    #     params.spectrogram_dir = f'spectrogram_{downscale}'
+
+    #     dm = SpeechDataModule(params)
+    #     dm.setup('fit')
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    from Upsampler_data.create_data import SpectrogramUpsampler
+    from diffwave_model import DiffWave
+
+
+    base_params["downscale"] = 0.5
+    params = AttrDict(base_params)
+
+    spec_ups_05 = SpectrogramUpsampler.load_from_checkpoint("Upsampler_data/upsamplers/0.5/best-epoch=1-val_loss=0.000007.ckpt")
+    ckpt = torch.load("models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt", map_location=device)
+    model_05 = DiffWave(params)
+    model_05.load_state_dict(ckpt['state_dict'])
+    model_05.spectrogram_upsampler = spec_ups_05
+
+
+    base_params["downscale"] = 0.25
+    params = AttrDict(base_params)
+
+    spec_ups_025 = SpectrogramUpsampler.load_from_checkpoint("Upsampler_data/upsamplers/0.25/best-epoch=1-val_loss=0.000004.ckpt")
+    ckpt = torch.load("models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt", map_location=device)
+    model_025 = DiffWave(params)
+    model_025.load_state_dict(ckpt['state_dict'])
+    model_025.spectrogram_upsampler = spec_ups_025
+
+
+    base_params["downscale"] = None
+    params = AttrDict(base_params)
+
+    ckpt = torch.load("models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt", map_location=device)
+    model_1 = DiffWave(params)
+    model_1.load_state_dict(ckpt['state_dict'])
+
+
+    # torch create random tensor of shape (1, 80, 500)
+    spec_1 = torch.randn(1, 80, 32)
+    spec_05 = torch.randn(1, 40, 16)
+    spec_025 = torch.randn(1, 20, 8)
+
+#%%
+
+    for model, spec in reversed([(model_1, spec_1), (model_05, spec_05), (model_025, spec_025)]):
+        model.eval()
+        with torch.no_grad():
+            audio = model.predict_step({"spectrogram": spec}, "din mor")
+            print(audio.shape)
+
+
 

@@ -142,6 +142,10 @@ class ModelEvaluator:
 if __name__ == "__main__":
     
 
+    model_paths = ["models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt", ""]
+
+
+
     downscales = [None, 0.5, 0.25, 0.25]
 
     model_path = "models_for_comparison/k-epoch=53-val_loss=0.037580.ckpt"
