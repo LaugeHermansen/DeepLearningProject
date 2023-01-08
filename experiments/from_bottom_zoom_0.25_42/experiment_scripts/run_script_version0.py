@@ -37,7 +37,7 @@ def main():
     #########################################################################
     # -------------- specify the options for the experiment -----------------
 
-    zoom = 0.05
+    zoom = 0.25
     
     experiment_name = f'from_bottom_zoom_{zoom}'
     global_seed = 42

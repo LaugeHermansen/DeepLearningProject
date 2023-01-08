@@ -7,10 +7,12 @@ from tqdm import tqdm
 
 
 def zoom_spec(spec, reduction_factor):
-    return zoom(zoom(spec, reduction_factor), 1/reduction_factor)
+    ret = zoom(zoom(spec, reduction_factor), 1/reduction_factor)
+    assert ret.shape[0] == params.n_mels
+    return ret
 
 if __name__ == "__main__":
-    reduction_factor = 0.5
+    reduction_factor = 0.05
     
     spec_reduced_dir = os.path.join(params.spectrogram_dir_root, str(reduction_factor))
     spec_full_dir = os.path.join(params.spectrogram_dir_root, params.spectrogram_full_dir)
